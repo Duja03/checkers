@@ -127,7 +127,7 @@ class Game(object):
         board = deepcopy(self._board.board)
         value, move = minimax(
             self._board,
-            5,
+            6,
             float("-inf"),
             float("inf"),
             self._turn_color == TileState.BLACK_COLOR,
@@ -159,6 +159,11 @@ class Game(object):
                 self._current_turn_moves = []
                 return
             self._board.calculate_next_moves(cords, self._current_turn_moves)
+            # Sorting for better performance:
+            self._current_turn_moves.sort(
+                key=lambda x: len(x.eaten_cords), reverse=True
+            )
+            print(self._current_turn_moves)
             self._selected_piece = cords
         else:
             for move in self._current_turn_moves:

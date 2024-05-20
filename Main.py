@@ -13,13 +13,11 @@ WIN = pygame.display.set_mode(
 )
 pygame.display.set_caption("Checkers")
 
-
 def get_row_col_from_mouse(pos):
     x, y = pos
     row = y // Game.TILE_SIZE
     col = x // Game.TILE_SIZE
     return row, col
-
 
 def main():
     run = True

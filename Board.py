@@ -251,6 +251,8 @@ class Board(object):
         pieces = self.get_all_pieces(color)
         for piece in pieces:
             self.calculate_next_moves(piece, all_turn_moves)
+        # Sorting moves by the number of eaten pieces:
+        all_turn_moves.sort(key=lambda x: len(x.eaten_cords), reverse=True)
         return all_turn_moves
 
     def make_move(self, move: Move):
