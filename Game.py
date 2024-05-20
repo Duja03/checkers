@@ -1,6 +1,11 @@
+import time
+from copy import deepcopy
+
 import pygame
 
+from Algorithm import minimax
 from Board import Board
+from Move import Move
 from TileState import TileState
 
 
@@ -114,17 +119,34 @@ class Game(object):
             )
 
     def change_turn(self):
-        self._turn_color = (
-            TileState.WHITE_COLOR
-            if self._turn_color == TileState.BLACK_COLOR
-            else TileState.BLACK_COLOR
+        self._turn_color = self._turn_color.opposite_color()
+
+    def play_next_move(self):
+        print("Computer is thinking...")
+        start_time = time.time()
+        board = deepcopy(self._board.board)
+        value, move = minimax(
+            self._board,
+            6,
+            float("-inf"),
+            float("inf"),
+            self._turn_color == TileState.BLACK_COLOR
         )
+        end_time = time.time()
+        self._board.board = board
+        elapsed_time = end_time - start_time
+        print(f"Elapsed time: {elapsed_time} seconds")
+        self.make_move(move)
+
+    def make_move(self, move: Move):
+        self._board.make_move(move)
+        self.change_turn()
+        self.move_stack.append(move)
 
     def undo(self):
         if self.move_stack:
             move = self.move_stack.pop()
             self._board.undo_move(move)
-            self.board.print_state()
             self.change_turn()
 
     def select_piece(self, cords: tuple[int, int]) -> None:
@@ -148,7 +170,6 @@ class Game(object):
                     self._current_turn_moves = []
                     self.change_turn()
                     self.move_stack.append(move)
-                    self.board.print_state()
                     break
             else:
                 self._selected_piece = None

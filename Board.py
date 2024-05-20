@@ -38,9 +38,13 @@ class Board(object):
 
         for row in range(Board.ROWS):
             for col in range(Board.COLS):
+                if (row + col) % 2 == 0:
+                    continue
+
                 piece = self.get_piece((row, col))
                 if piece.is_empty():
                     continue
+
                 if piece.is_white():
                     if not piece.is_queen():
                         whites[0] += 1
@@ -326,11 +330,6 @@ class Board(object):
                     self._blacks_left += 1
 
             self.set_piece((cords[0], cords[1]), cords[2])
-
-    def print_state(self):
-        print(
-            f"W: {self._whites_left}, B: {self._blacks_left}, WQ: {self._white_queens}, BQ: {self._black_queens}"
-        )
 
     def __str__(self):
         # ans = ""
