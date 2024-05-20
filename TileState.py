@@ -5,6 +5,7 @@ class TileState(Enum):
     EMPTY = 0
     WHITE_COLOR = 1
     BLACK_COLOR = 2
+    
     QUEEN = 4
     WHITE_PIECE = WHITE_COLOR
     BLACK_PIECE = BLACK_COLOR

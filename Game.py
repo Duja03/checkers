@@ -1,6 +1,7 @@
 import pygame
 
 from Board import Board
+from TileState import TileState
 
 
 class Game(object):
@@ -15,6 +16,23 @@ class Game(object):
     def __init__(self, window: pygame.Surface) -> None:
         self._board = Board()
         self._window = window
+        self._turn = TileState.WHITE_PIECE
+
+    @property
+    def turn(self) -> TileState:
+        return self._turn
+
+    @turn.setter
+    def turn(self, turn: TileState) -> None:
+        self._turn = turn
+
+    @property
+    def board(self) -> Board:
+        return self._board
+    
+    @board.setter
+    def board(self, board: Board) -> None:
+        self._board = board
 
     def draw(self) -> None:
         self.draw_board()
@@ -32,7 +50,8 @@ class Game(object):
 
                 pygame.draw.rect(
                     self._window,
-                    color,(
+                    color,
+                    (
                         col * Game.TILE_SIZE,
                         row * Game.TILE_SIZE,
                         Game.TILE_SIZE,

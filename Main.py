@@ -4,7 +4,9 @@ from Board import Board
 from Game import Game
 
 FPS = 60
-WIN = pygame.display.set_mode((Game.TILE_SIZE * Board.COLS, Game.TILE_SIZE * Board.ROWS))
+WIN = pygame.display.set_mode(
+    (Game.TILE_SIZE * Board.COLS, Game.TILE_SIZE * Board.ROWS)
+)
 pygame.display.set_caption("Checkers")
 
 
@@ -29,11 +31,12 @@ def main():
                 run = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
+                print(game.board.get_all_pieces(game.turn))
                 cords = pygame.mouse.get_pos()
                 row, col = get_row_col_from_mouse(cords)
 
         game.draw()
-        #game.update()
+        # game.update()
 
     pygame.quit()
 
