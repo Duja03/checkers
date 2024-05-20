@@ -32,6 +32,99 @@ class Board(object):
     def is_game_over(self):
         return self._blacks_left == 0 or self._whites_left == 0
 
+    def evaluate(self):
+        whites = [0, 0, 0, 0, 0, 0, 0]
+        blacks = [0, 0, 0, 0, 0, 0, 0]
+
+        for row in range(Board.ROWS):
+            for col in range(Board.COLS):
+                piece = self.get_piece((row, col))
+                if piece.is_empty():
+                    continue
+                if piece.is_white():
+                    if not piece.is_queen():
+                        whites[0] += 1
+                    else:
+                        whites[1] += 1
+                    if row == Board.BOTTOM_BORDER:
+                        whites[2] += 1
+                        whites[6] += 1
+                        continue
+                    if row == 3 or row == 4:
+                        if 2 <= col <= 5:
+                            whites[3] += 1
+                        else:
+                            whites[4] += 1
+                    if (
+                        row > Board.TOP_BORDER
+                        and Board.LEFT_BORDER < col < Board.RIGHT_BORDER
+                    ):
+                        if (
+                            self.get_piece((row - 1, col - 1)).is_black()
+                            and self.get_piece((row + 1, col + 1)).is_empty()
+                        ):
+                            whites[5] += 1
+                        if (
+                            self.get_piece((row - 1, col + 1)).is_black()
+                            and self.get_piece((row + 1, col - 1)).is_empty()
+                        ):
+                            whites[5] += 1
+                    if row < Board.BOTTOM_BORDER:
+                        if col == Board.LEFT_BORDER or col == Board.RIGHT_BORDER:
+                            whites[6] += 1
+                        elif (
+                            self.get_piece((row + 1, col - 1)).is_white()
+                            or not self.get_piece((row + 1, col - 1)).is_queen()
+                        ) and (
+                            self.get_piece((row + 1, col + 1)).is_white()
+                            or not self.get_piece((row + 1, col + 1)).is_queen()
+                        ):
+                            whites[6] += 1
+                else:
+                    if piece.is_black():
+                        blacks[0] += 1
+                    else:
+                        blacks[1] += 1
+                    if row == Board.TOP_BORDER:
+                        blacks[2] += 1
+                        blacks[6] += 1
+                        continue
+                    if row == 3 or row == 4:
+                        if 2 <= col <= 5:
+                            blacks[3] += 1
+                        else:
+                            blacks[4] += 1
+                    if (
+                        row < Board.BOTTOM_BORDER
+                        and Board.LEFT_BORDER < col < Board.RIGHT_BORDER
+                    ):
+                        if (
+                            self.get_piece((row + 1, col - 1)).is_white()
+                            and self.get_piece((row - 1, col + 1)).is_empty()
+                        ):
+                            blacks[5] += 1
+                        if (
+                            self.get_piece((row + 1, col + 1)).is_white()
+                            and self.get_piece((row - 1, col - 1)).is_empty()
+                        ):
+                            blacks[5] += 1
+                    if row > Board.TOP_BORDER:
+                        if col == Board.LEFT_BORDER or col == Board.RIGHT_BORDER:
+                            blacks[6] += 1
+                        elif (
+                            self.get_piece((row - 1, col - 1)).is_black()
+                            or not self.get_piece((row - 1, col - 1)).is_queen()
+                        ) and (
+                            self.get_piece((row - 1, col + 1)).is_black()
+                            or not self.get_piece((row - 1, col + 1)).is_queen()
+                        ):
+                            blacks[6] += 1
+        weights = [5, 7.5, 4, 2.5, 0.5, -3, 3]
+        score = 0
+        for i in range(7):
+            score += weights[i] * (blacks[i] - whites[i])
+        return score
+
     def create_new_board(self):
         self._board = [[TileState.EMPTY for i in range(8)] for j in range(8)]
         # Set the initial state of the board:
@@ -148,10 +241,10 @@ class Board(object):
                     pieces.append((row, col))
         return pieces
 
-    def calculate_all_turn_moves(self, color: TileState):
+    def calculate_all_turn_moves(self, color: TileState) -> list[Move]:
         assert color == TileState.WHITE_COLOR or color == TileState.BLACK_COLOR
         all_turn_moves = []
-        pieces = self._get_all_pieces(color)
+        pieces = self.get_all_pieces(color)
         for piece in pieces:
             self.calculate_next_moves(piece, all_turn_moves)
         return all_turn_moves
@@ -240,12 +333,13 @@ class Board(object):
         )
 
     def __str__(self):
-        ans = ""
-        row_num = 0
-        for row in self._board:
-            ans += (str(row) + "\n") if row_num != 7 else str(row)
-            row_num += 1
-        return ans
+        # ans = ""
+        # row_num = 0
+        # for row in self._board:
+        #    ans += (str(row) + "\n") if row_num != 7 else str(row)
+        #    row_num += 1
+        # return ans
+        return super().__str__()
 
     def __eq__(self, other):
         return self._board == other._board

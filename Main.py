@@ -1,7 +1,11 @@
+import time
+
 import pygame
 
+from Algorithm import minimax
 from Board import Board
 from Game import Game
+from TileState import TileState
 
 FPS = 60
 WIN = pygame.display.set_mode(
@@ -25,6 +29,16 @@ def main():
 
     while run:
         clock.tick(FPS)
+
+        if game.turn_color == TileState.BLACK_COLOR:
+            start_time = time.time()
+            value, move = minimax(game.board, 6, float("-inf"), float("inf"), True)
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"Elapsed time: {elapsed_time} seconds")
+            game.board.make_move(move)
+            game.move_stack.append(move)
+            game.change_turn()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

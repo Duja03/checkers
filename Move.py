@@ -1,5 +1,10 @@
 class Move(object):
-    def __init__(self, start_cords: tuple, target_cords: tuple, eaten_cords=[]) -> None:
+    def __init__(
+        self,
+        start_cords: tuple[int, int],
+        target_cords: tuple[int, int],
+        eaten_cords=[],
+    ) -> None:
         self._start_cords = start_cords
         self._target_cords = target_cords
         self._eaten_cords = eaten_cords
@@ -9,9 +14,6 @@ class Move(object):
 
     def __repr__(self) -> str:
         return self.__str__()
-
-    def add_eaten_piece(self, cords: tuple) -> None:
-        self._eaten_cords.append(cords)
 
     @property
     def start_cords(self):
