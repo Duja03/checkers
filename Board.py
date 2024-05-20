@@ -16,7 +16,6 @@ class Board(object):
         self._board = []
         self._whites_left = 12
         self._blacks_left = 12
-        self.all_turn_moves = []
 
         self.create_new_board()
 
@@ -39,11 +38,21 @@ class Board(object):
                     elif row > 4:
                         self._board[row][col] = TileState.WHITE_PIECE
 
+        self.board[4][3] = TileState.BLACK_QUEEN
+
     def get_piece(self, cords: tuple) -> TileState:
         return self._board[cords[0]][cords[1]]
 
+    def set_piece(self, cords: tuple, type: TileState) -> None:
+        self._board[cords[0]][cords[1]] = type
+
     def _calculate_next_jumps(
-        self, org_cords: tuple, piece_cords: tuple, dir: tuple, eaten=[]
+        self,
+        org_cords: tuple,
+        piece_cords: tuple,
+        dir: tuple,
+        all_turn_moves: list,
+        eaten: list,
     ):
         piece = self.get_piece(org_cords)
         is_queen = piece.is_queen()
@@ -74,15 +83,15 @@ class Board(object):
                     ):
                         adv_piece = self.get_piece(adv_cords)
                         if adv_piece.is_empty():
-                            new_eaten = eaten + [short_cords]
-                            self.all_turn_moves.append(
-                                Move(org_cords, adv_cords, new_eaten)
-                            )
+                            new_eaten = eaten + [
+                                (short_cords[0], short_cords[1], short_piece)
+                            ]
+                            all_turn_moves.append(Move(org_cords, adv_cords, new_eaten))
                             self._calculate_next_jumps(
-                                org_cords, adv_cords, sh_dir, new_eaten
+                                org_cords, adv_cords, sh_dir, all_turn_moves, new_eaten
                             )
 
-    def calculate_next_moves(self, piece_cords: tuple):
+    def _calculate_next_moves(self, piece_cords: tuple, all_turn_moves: list):
         # Basic data:
         piece = self.get_piece(piece_cords)
         if piece.is_empty():
@@ -104,7 +113,7 @@ class Board(object):
             ):
                 short_piece = self.get_piece(short_cords)
                 if short_piece.is_empty():
-                    self.all_turn_moves.append(Move(piece_cords, short_cords))
+                    all_turn_moves.append(Move(piece_cords, short_cords))
                 elif short_piece.get_color() == piece.opposite_color():
                     adv_cords = (
                         short_cords[0] + sh_dir[0],
@@ -116,15 +125,13 @@ class Board(object):
                     ):
                         adv_piece = self.get_piece(adv_cords)
                         if adv_piece.is_empty():
-                            eaten = [short_cords]
-                            self.all_turn_moves.append(
-                                Move(piece_cords, adv_cords, eaten)
-                            )
+                            eaten = [(short_cords[0], short_cords[1], short_piece)]
+                            all_turn_moves.append(Move(piece_cords, adv_cords, eaten))
                             self._calculate_next_jumps(
-                                piece_cords, adv_cords, sh_dir, eaten
+                                piece_cords, adv_cords, sh_dir, all_turn_moves, eaten
                             )
 
-    def get_all_pieces(self, color: TileState) -> list:
+    def _get_all_pieces(self, color: TileState) -> list:
         """
         Returns a list of all cordinates of pieces of the given color.
         """
@@ -140,9 +147,33 @@ class Board(object):
 
     def calculate_all_turn_moves(self, color: TileState):
         assert color == TileState.WHITE_COLOR or color == TileState.BLACK_COLOR
-        pieces = self.get_all_pieces(color)
+        all_turn_moves = []
+        pieces = self._get_all_pieces(color)
         for piece in pieces:
-            self.calculate_next_moves(piece)
+            self._calculate_next_moves(piece, all_turn_moves)
+        return all_turn_moves
+
+    def make_move(self, move: Move):
+        start_cords = move.start_cords
+        target_cords = move.target_cords
+        eaten_cords = move.eaten_cords
+
+        self.set_piece(target_cords, self.get_piece(start_cords))
+        self.set_piece(start_cords, TileState.EMPTY)
+        # Removing eaten pieces:
+        for cords in eaten_cords:
+            self.set_piece((cords[0], cords[1]), TileState.EMPTY)
+
+    def undo_move(self, move: Move):
+        start_cords = move.start_cords
+        target_cords = move.target_cords
+        eaten_cords = move.eaten_cords
+
+        self.set_piece(start_cords, self.get_piece(target_cords))
+        self.set_piece(target_cords, TileState.EMPTY)
+        # Adding back the eaten pieces:
+        for cords in eaten_cords:
+            self.set_piece((cords[0], cords[1]), cords[2])
 
     def __str__(self):
         ans = ""
@@ -161,6 +192,9 @@ class Board(object):
 
 if __name__ == "__main__":
     state = Board()
+    print(state.calculate_all_turn_moves(TileState.WHITE_COLOR))
+    print("\n", state, "\n")
+    state.make_move(Move((5, 2), (3, 4), [(4, 3, TileState.BLACK_QUEEN)]))
+    print(state, "\n")
+    state.undo_move(Move((5, 2), (3, 4), [(4, 3, TileState.BLACK_QUEEN)]))
     print(state)
-    state.calculate_all_turn_moves(TileState.WHITE_COLOR)
-    print(state.all_turn_moves)
