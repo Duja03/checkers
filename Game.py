@@ -14,6 +14,7 @@ class Game(object):
     BLACK_PIECE_COLOR = (0, 100, 255)
 
     VALID_MOVE_COLOR = (0, 255, 0)
+    QUEEN_COLOR = (255, 255, 0)
 
     def __init__(self, window: pygame.Surface) -> None:
         self._board = Board()
@@ -28,7 +29,7 @@ class Game(object):
         return self._turn_color
 
     @turn_color.setter
-    def turn(self, turn: TileState) -> None:
+    def turn_color(self, turn: TileState) -> None:
         self._turn_color = turn
 
     @property
@@ -88,6 +89,18 @@ class Game(object):
                     Game.TILE_SIZE // 2 - 10,
                 )
 
+                # Drawing queen:
+                if piece.is_queen():
+                    pygame.draw.circle(
+                        self._window,
+                        Game.QUEEN_COLOR,
+                        (
+                            col * Game.TILE_SIZE + Game.TILE_SIZE // 2,
+                            row * Game.TILE_SIZE + Game.TILE_SIZE // 2,
+                        ),
+                        Game.TILE_SIZE // 5,
+                    )
+
     def draw_valid_moves(self) -> None:
         for move in self._current_turn_moves:
             pygame.draw.circle(
@@ -114,7 +127,7 @@ class Game(object):
             self.board.print_state()
             self.change_turn()
 
-    def select_piece(self, cords: tuple) -> None:
+    def select_piece(self, cords: tuple[int, int]) -> None:
         if self._selected_piece is None:
             turn_pieces = self._board.get_all_pieces(self._turn_color)
             # If we selected wrong piece, do nothing

@@ -29,6 +29,9 @@ class Board(object):
     def board(self, board: list):
         self._board = board
 
+    def is_game_over(self):
+        return self._blacks_left == 0 or self._whites_left == 0
+
     def create_new_board(self):
         self._board = [[TileState.EMPTY for i in range(8)] for j in range(8)]
         # Set the initial state of the board:
@@ -40,17 +43,17 @@ class Board(object):
                     elif row > 4:
                         self._board[row][col] = TileState.WHITE_PIECE
 
-    def get_piece(self, cords: tuple) -> TileState:
+    def get_piece(self, cords: tuple[int, int]) -> TileState:
         return self._board[cords[0]][cords[1]]
 
-    def set_piece(self, cords: tuple, type: TileState) -> None:
+    def set_piece(self, cords: tuple[int, int], type: TileState) -> None:
         self._board[cords[0]][cords[1]] = type
 
     def _calculate_next_jumps(
         self,
-        org_cords: tuple,
-        piece_cords: tuple,
-        dir: tuple,
+        org_cords: tuple[int, int],
+        piece_cords: tuple[int, int],
+        dir: tuple[int, int],
         all_turn_moves: list,
         eaten: list,
     ):
@@ -180,8 +183,10 @@ class Board(object):
             if is_queen:
                 if eaten_piece.is_white():
                     self._white_queens -= 1
+                    self._whites_left -= 1
                 else:
                     self._black_queens -= 1
+                    self._blacks_left -= 1
             else:
                 if eaten_piece.is_white():
                     self._whites_left -= 1
@@ -217,8 +222,10 @@ class Board(object):
             if is_queen:
                 if eaten_piece.is_white():
                     self._white_queens += 1
+                    self._whites_left += 1
                 else:
                     self._black_queens += 1
+                    self._blacks_left += 1
             else:
                 if eaten_piece.is_white():
                     self._whites_left += 1
@@ -228,7 +235,9 @@ class Board(object):
             self.set_piece((cords[0], cords[1]), cords[2])
 
     def print_state(self):
-        print(f"W: {self._whites_left}, B: {self._blacks_left}, WQ: {self._white_queens}, BQ: {self._black_queens}")
+        print(
+            f"W: {self._whites_left}, B: {self._blacks_left}, WQ: {self._white_queens}, BQ: {self._black_queens}"
+        )
 
     def __str__(self):
         ans = ""
@@ -243,13 +252,3 @@ class Board(object):
 
     def __hash__(self):
         return hash(self._board)
-
-
-if __name__ == "__main__":
-    state = Board()
-    print(state.calculate_all_turn_moves(TileState.WHITE_COLOR))
-    print("\n", state, "\n")
-    state.make_move(Move((5, 2), (3, 4), [(4, 3, TileState.BLACK_QUEEN)]))
-    print(state, "\n")
-    state.undo_move(Move((5, 2), (3, 4), [(4, 3, TileState.BLACK_QUEEN)]))
-    print(state)
