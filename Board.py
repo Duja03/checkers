@@ -38,8 +38,6 @@ class Board(object):
                     elif row > 4:
                         self._board[row][col] = TileState.WHITE_PIECE
 
-        self.board[4][3] = TileState.BLACK_QUEEN
-
     def get_piece(self, cords: tuple) -> TileState:
         return self._board[cords[0]][cords[1]]
 
@@ -91,7 +89,7 @@ class Board(object):
                                 org_cords, adv_cords, sh_dir, all_turn_moves, new_eaten
                             )
 
-    def _calculate_next_moves(self, piece_cords: tuple, all_turn_moves: list):
+    def calculate_next_moves(self, piece_cords: tuple, all_turn_moves: list):
         # Basic data:
         piece = self.get_piece(piece_cords)
         if piece.is_empty():
@@ -131,7 +129,7 @@ class Board(object):
                                 piece_cords, adv_cords, sh_dir, all_turn_moves, eaten
                             )
 
-    def _get_all_pieces(self, color: TileState) -> list:
+    def get_all_pieces(self, color: TileState) -> list:
         """
         Returns a list of all cordinates of pieces of the given color.
         """
@@ -150,7 +148,7 @@ class Board(object):
         all_turn_moves = []
         pieces = self._get_all_pieces(color)
         for piece in pieces:
-            self._calculate_next_moves(piece, all_turn_moves)
+            self.calculate_next_moves(piece, all_turn_moves)
         return all_turn_moves
 
     def make_move(self, move: Move):
