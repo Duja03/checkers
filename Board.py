@@ -1,7 +1,7 @@
 from TileState import TileState
 
 
-class State(object):
+class Board(object):
     # Static variables:
     ROWS = 8
     COLS = 8
@@ -51,8 +51,8 @@ class State(object):
         for sh_dir in short_dirs:
             short_cords = (piece_cords[0] + sh_dir[0], piece_cords[1] + sh_dir[1])
             if (
-                State.TOP_BORDER <= short_cords[0] <= State.BOTTOM_BORDER
-                and State.LEFT_BORDER <= short_cords[1] <= State.RIGHT_BORDER
+                Board.TOP_BORDER <= short_cords[0] <= Board.BOTTOM_BORDER
+                and Board.LEFT_BORDER <= short_cords[1] <= Board.RIGHT_BORDER
             ):
                 short_piece = self.get_piece(short_cords)
                 if short_piece == TileState.EMPTY:
@@ -63,8 +63,8 @@ class State(object):
                         short_cords[1] + sh_dir[1],
                     )
                     if (
-                        State.TOP_BORDER <= adv_cords[0] <= State.BOTTOM_BORDER
-                        and State.LEFT_BORDER <= adv_cords[1] <= State.RIGHT_BORDER
+                        Board.TOP_BORDER <= adv_cords[0] <= Board.BOTTOM_BORDER
+                        and Board.LEFT_BORDER <= adv_cords[1] <= Board.RIGHT_BORDER
                     ):
                         adv_piece = self.get_piece(adv_cords)
                         if adv_piece == TileState.EMPTY:
@@ -79,14 +79,14 @@ class State(object):
                         short_cords[1] + sh_dir[1],
                     )
                     if (
-                        State.TOP_BORDER == adv_cords[0]
-                        or State.BOTTOM_BORDER == adv_cords[0]
-                    ) and State.LEFT_BORDER <= adv_cords[1] <= State.RIGHT_BORDER:
+                        Board.TOP_BORDER == adv_cords[0]
+                        or Board.BOTTOM_BORDER == adv_cords[0]
+                    ) and Board.LEFT_BORDER <= adv_cords[1] <= Board.RIGHT_BORDER:
                         # Promote to queen:
                         self.get_piece(adv_cords).promote_to_queen()
                     if (
-                        State.TOP_BORDER <= adv_cords[0] <= State.BOTTOM_BORDER
-                        and State.LEFT_BORDER <= adv_cords[1] <= State.RIGHT_BORDER
+                        Board.TOP_BORDER <= adv_cords[0] <= Board.BOTTOM_BORDER
+                        and Board.LEFT_BORDER <= adv_cords[1] <= Board.RIGHT_BORDER
                     ):
                         adv_piece = self.get_piece(adv_cords)
                         if adv_piece == TileState.EMPTY:
@@ -110,8 +110,8 @@ class State(object):
         for sh_dir in short_dirs:
             short_cords = (piece_cords[0] + sh_dir[0], piece_cords[1] + sh_dir[1])
             if (
-                State.TOP_BORDER <= short_cords[0] <= State.BOTTOM_BORDER
-                and State.LEFT_BORDER <= short_cords[1] <= State.RIGHT_BORDER
+                Board.TOP_BORDER <= short_cords[0] <= Board.BOTTOM_BORDER
+                and Board.LEFT_BORDER <= short_cords[1] <= Board.RIGHT_BORDER
             ):
                 short_piece = self.get_piece(short_cords)
                 if short_piece == TileState.EMPTY:
@@ -122,8 +122,8 @@ class State(object):
                         short_cords[1] + sh_dir[1],
                     )
                     if (
-                        State.TOP_BORDER <= adv_cords[0] <= State.BOTTOM_BORDER
-                        and State.LEFT_BORDER <= adv_cords[1] <= State.RIGHT_BORDER
+                        Board.TOP_BORDER <= adv_cords[0] <= Board.BOTTOM_BORDER
+                        and Board.LEFT_BORDER <= adv_cords[1] <= Board.RIGHT_BORDER
                     ):
                         adv_piece = self.get_piece(adv_cords)
                         if adv_piece == TileState.EMPTY:
@@ -144,7 +144,8 @@ class State(object):
     def __hash__(self):
         return hash(self._board)
 
+
 if __name__ == "__main__":
-    state = State()
+    state = Board()
     print(state)
     state.calculate_next_moves((0, 0))
