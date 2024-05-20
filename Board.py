@@ -16,6 +16,8 @@ class Board(object):
         self._board = []
         self._whites_left = 12
         self._blacks_left = 12
+        self._white_queens = 0
+        self._black_queens = 0
 
         self.create_new_board()
 
@@ -155,23 +157,78 @@ class Board(object):
         start_cords = move.start_cords
         target_cords = move.target_cords
         eaten_cords = move.eaten_cords
+        # Potential queen promotion:
+        start_piece = self.get_piece(start_cords)
+        if (
+            target_cords[0] == Board.TOP_BORDER
+            or target_cords[0] == Board.BOTTOM_BORDER
+        ):
+            self.set_piece(target_cords, start_piece.promote_to_queen())
+            if start_piece.is_white():
+                self._white_queens += 1
+            else:
+                self._black_queens += 1
+        else:
+            self.set_piece(target_cords, start_piece)
 
-        self.set_piece(target_cords, self.get_piece(start_cords))
         self.set_piece(start_cords, TileState.EMPTY)
         # Removing eaten pieces:
         for cords in eaten_cords:
+            eaten_piece = cords[2]
+            is_queen = eaten_piece.is_queen()
+            # Decreasing number of pieces:
+            if is_queen:
+                if eaten_piece.is_white():
+                    self._white_queens -= 1
+                else:
+                    self._black_queens -= 1
+            else:
+                if eaten_piece.is_white():
+                    self._whites_left -= 1
+                else:
+                    self._blacks_left -= 1
+
             self.set_piece((cords[0], cords[1]), TileState.EMPTY)
 
     def undo_move(self, move: Move):
         start_cords = move.start_cords
         target_cords = move.target_cords
         eaten_cords = move.eaten_cords
+        # Potential queen demotion:
+        end_piece = self.get_piece(target_cords)
+        if (
+            target_cords[0] == Board.TOP_BORDER
+            or target_cords[0] == Board.BOTTOM_BORDER
+        ):
+            if end_piece.is_white():
+                self._white_queens -= 1
+            else:
+                self._black_queens -= 1
+            self.set_piece(start_cords, end_piece.demote_to_piece())
+        else:
+            self.set_piece(start_cords, end_piece)
 
-        self.set_piece(start_cords, self.get_piece(target_cords))
         self.set_piece(target_cords, TileState.EMPTY)
-        # Adding back the eaten pieces:
+        # Adding eaten pieces:
         for cords in eaten_cords:
+            eaten_piece = cords[2]
+            is_queen = eaten_piece.is_queen()
+            # Increase number of pieces:
+            if is_queen:
+                if eaten_piece.is_white():
+                    self._white_queens += 1
+                else:
+                    self._black_queens += 1
+            else:
+                if eaten_piece.is_white():
+                    self._whites_left += 1
+                else:
+                    self._blacks_left += 1
+
             self.set_piece((cords[0], cords[1]), cords[2])
+
+    def print_state(self):
+        print(f"W: {self._whites_left}, B: {self._blacks_left}, WQ: {self._white_queens}, BQ: {self._black_queens}")
 
     def __str__(self):
         ans = ""

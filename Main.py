@@ -31,8 +31,11 @@ def main():
                 run = False
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                cords = get_row_col_from_mouse(pygame.mouse.get_pos())
-                game.select_piece(cords)
+                if event.button == 3:
+                    game.undo()
+                elif event.button == 1:
+                    cords = get_row_col_from_mouse(pygame.mouse.get_pos())
+                    game.select_piece(cords)
 
         game.draw()
         # game.update()

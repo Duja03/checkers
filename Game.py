@@ -21,6 +21,7 @@ class Game(object):
         self._turn_color = TileState.WHITE_COLOR
         self._selected_piece = None
         self._current_turn_moves = []
+        self.move_stack = []
 
     @property
     def turn_color(self) -> TileState:
@@ -106,6 +107,13 @@ class Game(object):
             else TileState.BLACK_COLOR
         )
 
+    def undo(self):
+        if self.move_stack:
+            move = self.move_stack.pop()
+            self._board.undo_move(move)
+            self.board.print_state()
+            self.change_turn()
+
     def select_piece(self, cords: tuple) -> None:
         if self._selected_piece is None:
             turn_pieces = self._board.get_all_pieces(self._turn_color)
@@ -126,6 +134,8 @@ class Game(object):
                     self._selected_piece = None
                     self._current_turn_moves = []
                     self.change_turn()
+                    self.move_stack.append(move)
+                    self.board.print_state()
                     break
             else:
                 self._selected_piece = None

@@ -5,7 +5,7 @@ class TileState(Enum):
     EMPTY = 0
     WHITE_COLOR = 1
     BLACK_COLOR = 2
-    
+
     QUEEN = 4
     WHITE_PIECE = WHITE_COLOR
     BLACK_PIECE = BLACK_COLOR
@@ -33,10 +33,20 @@ class TileState(Enum):
             return TileState.EMPTY
 
     def promote_to_queen(self):
+        assert not self.is_queen()
         if self.is_white():
             return TileState.WHITE_QUEEN
         elif self.is_black():
             return TileState.BLACK_QUEEN
+        else:
+            return TileState.EMPTY
+
+    def demote_to_piece(self):
+        assert self.is_queen()
+        if self.is_white():
+            return TileState.WHITE_PIECE
+        elif self.is_black():
+            return TileState.BLACK_PIECE
         else:
             return TileState.EMPTY
 
