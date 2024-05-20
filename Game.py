@@ -127,12 +127,13 @@ class Game(object):
         board = deepcopy(self._board.board)
         value, move = minimax(
             self._board,
-            6,
+            5,
             float("-inf"),
             float("inf"),
-            self._turn_color == TileState.BLACK_COLOR
+            self._turn_color == TileState.BLACK_COLOR,
         )
         end_time = time.time()
+        print(f"Value: {value}, Move: {move}")
         self._board.board = board
         elapsed_time = end_time - start_time
         print(f"Elapsed time: {elapsed_time} seconds")
