@@ -5,36 +5,25 @@ import pygame
 
 from Algorithm import minimax
 from Board import Board
+from Constants import *
 from Move import Move
-from TileState import TileState
 
 
 class Game(object):
-    TILE_SIZE = 80
-
-    WHITE_TILE_COLOR = (255, 255, 255)
-    BLACK_TILE_COLOR = (0, 0, 0)
-
-    WHITE_PIECE_COLOR = (255, 0, 0)
-    BLACK_PIECE_COLOR = (0, 100, 255)
-
-    VALID_MOVE_COLOR = (0, 255, 0)
-    QUEEN_COLOR = (255, 255, 0)
-
     def __init__(self, window: pygame.Surface) -> None:
         self._board = Board()
         self._window = window
-        self._turn_color = TileState.WHITE_COLOR
-        self._selected_piece = None
-        self._current_turn_moves = []
-        self.move_stack = []
+        self._turn_color: int = WHITE_COLOR
+        self._selected_piece: int = None
+        self._current_turn_moves: list[Move] = []
+        self.move_stack: list[Move] = []
 
     @property
-    def turn_color(self) -> TileState:
+    def turn_color(self) -> int:
         return self._turn_color
 
     @turn_color.setter
-    def turn_color(self, turn: TileState) -> None:
+    def turn_color(self, turn: int) -> None:
         self._turn_color = turn
 
     @property
@@ -52,91 +41,91 @@ class Game(object):
         pygame.display.update()
 
     def draw_board(self) -> None:
-        for row in range(Board.ROWS):
-            for col in range(Board.COLS):
-                color = (
-                    Game.WHITE_TILE_COLOR
-                    if (row + col) % 2 == 0
-                    else Game.BLACK_TILE_COLOR
-                )
+        for tile_number in range(ROWS * COLS):
+            row = tile_number // COLS
+            col = tile_number % COLS
+            color = WHITE_TILE_COLOR if (row + col) % 2 == 0 else BLACK_TILE_COLOR
 
-                pygame.draw.rect(
-                    self._window,
-                    color,
-                    (
-                        col * Game.TILE_SIZE,
-                        row * Game.TILE_SIZE,
-                        Game.TILE_SIZE,
-                        Game.TILE_SIZE,
-                    ),
-                )
+            pygame.draw.rect(
+                self._window,
+                color,
+                (
+                    col * TILE_SIZE,
+                    row * TILE_SIZE,
+                    TILE_SIZE,
+                    TILE_SIZE,
+                ),
+            )
 
     def draw_pieces(self) -> None:
-        for row in range(Board.ROWS):
-            for col in range(Board.COLS):
-                piece = self._board.get_piece((row, col))
-                if piece.is_empty():
-                    continue
+        for tile_number in range(ROWS * COLS):
+            row = tile_number // COLS
+            col = tile_number % COLS
+            piece = self._board.get_piece(tile_number)
+            if piece.is_empty():
+                continue
 
-                color = (
-                    Game.WHITE_PIECE_COLOR
-                    if piece.is_white()
-                    else Game.BLACK_PIECE_COLOR
-                )
+            color = WHITE_PIECE_COLOR if piece.is_white() else BLACK_PIECE_COLOR
 
+            pygame.draw.circle(
+                self._window,
+                color,
+                (
+                    col * TILE_SIZE + TILE_SIZE // 2,
+                    row * TILE_SIZE + TILE_SIZE // 2,
+                ),
+                TILE_SIZE // 2 - 10,
+            )
+
+            # Drawing queen:
+            if piece.is_queen():
                 pygame.draw.circle(
                     self._window,
-                    color,
+                    QUEEN_COLOR,
                     (
-                        col * Game.TILE_SIZE + Game.TILE_SIZE // 2,
-                        row * Game.TILE_SIZE + Game.TILE_SIZE // 2,
+                        col * TILE_SIZE + TILE_SIZE // 2,
+                        row * TILE_SIZE + TILE_SIZE // 2,
                     ),
-                    Game.TILE_SIZE // 2 - 10,
+                    TILE_SIZE // 5,
                 )
-
-                # Drawing queen:
-                if piece.is_queen():
-                    pygame.draw.circle(
-                        self._window,
-                        Game.QUEEN_COLOR,
-                        (
-                            col * Game.TILE_SIZE + Game.TILE_SIZE // 2,
-                            row * Game.TILE_SIZE + Game.TILE_SIZE // 2,
-                        ),
-                        Game.TILE_SIZE // 5,
-                    )
 
     def draw_valid_moves(self) -> None:
         for move in self._current_turn_moves:
+            target_piece = self._board.get_piece(move.target_tile)
             pygame.draw.circle(
                 self._window,
-                (0, 255, 0),
+                VALID_MOVE_COLOR,
                 (
-                    move.target_cords[1] * Game.TILE_SIZE + Game.TILE_SIZE // 2,
-                    move.target_cords[0] * Game.TILE_SIZE + Game.TILE_SIZE // 2,
+                    target_piece.col * TILE_SIZE + TILE_SIZE // 2,
+                    target_piece.row * TILE_SIZE + TILE_SIZE // 2,
                 ),
-                Game.TILE_SIZE // 10,
+                TILE_SIZE // 10,
             )
 
     def change_turn(self):
-        self._turn_color = self._turn_color.opposite_color()
+        self._turn_color = (
+            BLACK_COLOR if self._turn_color == WHITE_COLOR else WHITE_COLOR
+        )
 
     def play_next_move(self):
         print("Computer is thinking...")
         start_time = time.time()
+        # Save the current state of the board:
         board = deepcopy(self._board.board)
         value, move = minimax(
             self._board,
             6,
             float("-inf"),
             float("inf"),
-            self._turn_color == TileState.BLACK_COLOR,
+            self._turn_color == BLACK_COLOR,
         )
         end_time = time.time()
-        print(f"Value: {value}, Move: {move}")
-        self._board.board = board
         elapsed_time = end_time - start_time
+        # Bring back old board state:
+        self._board.board = board
+        print(f"Value: {value}, Move: {move}")
         print(f"Elapsed time: {elapsed_time} seconds")
+
         self.make_move(move)
 
     def make_move(self, move: Move):
@@ -151,25 +140,22 @@ class Game(object):
             self.change_turn()
 
     def select_piece(self, cords: tuple[int, int]) -> None:
+        selected_tile = cords[0] * COLS + cords[1]
         if self._selected_piece is None:
-            turn_pieces = self._board.get_all_pieces(self._turn_color)
+            turn_pieces = self._board.get_all_piece_tiles(self._turn_color)
             # If we selected wrong piece, do nothing
-            if cords not in turn_pieces:
+            if selected_tile not in turn_pieces:
                 self._selected_piece = None
                 self._current_turn_moves = []
                 return
-            self._board.calculate_next_moves(cords, self._current_turn_moves)
-            # Sorting for better performance:
-            self._current_turn_moves.sort(
-                key=lambda x: len(x.eaten_cords), reverse=True
-            )
+            self._current_turn_moves = self._board.calculate_next_moves(selected_tile)
             print(self._current_turn_moves)
-            self._selected_piece = cords
+            self._selected_piece = selected_tile
         else:
             for move in self._current_turn_moves:
                 if (
-                    move.start_cords == self._selected_piece
-                    and move.target_cords == cords
+                    move.start_tile == self._selected_piece
+                    and move.target_tile == selected_tile
                 ):
                     self._board.make_move(move)
                     self._selected_piece = None

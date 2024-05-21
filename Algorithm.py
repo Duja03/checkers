@@ -1,7 +1,14 @@
-from TileState import TileState
+from Board import Board
+from Constants import *
 
 
-def minimax(state, depth, alpha, beta, is_maximising_player):
+def minimax(
+    state: Board, 
+    depth: int, 
+    alpha: float, 
+    beta: float, 
+    is_maximising_player: bool
+):
     if depth == 0 or state.is_game_over():
         return state.evaluate(), None
 
@@ -10,7 +17,7 @@ def minimax(state, depth, alpha, beta, is_maximising_player):
     if is_maximising_player:
         max_eval = float("-inf")
         best_move = None
-        for move in state.calculate_all_turn_moves(TileState.BLACK_COLOR):
+        for move in state.calculate_all_turn_moves(BLACK_COLOR):
             state.make_move(move)
             eval = minimax(state, depth - 1, alpha, beta, maximizing)[0]
             state.undo_move(move)
@@ -24,7 +31,7 @@ def minimax(state, depth, alpha, beta, is_maximising_player):
     else:
         min_eval = float("inf")
         best_move = None
-        for move in state.calculate_all_turn_moves(TileState.WHITE_COLOR):
+        for move in state.calculate_all_turn_moves(WHITE_COLOR):
             state.make_move(move)
             eval = minimax(state, depth - 1, alpha, beta, maximizing)[0]
             state.undo_move(move)

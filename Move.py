@@ -1,40 +1,40 @@
 class Move(object):
     def __init__(
         self,
-        start_cords: tuple[int, int],
-        target_cords: tuple[int, int],
-        eaten_cords=[],
+        start_tile: int,
+        target_tile: int,
+        eaten_tiles: list[tuple[int, int]] = [],
     ) -> None:
-        self._start_cords = start_cords
-        self._target_cords = target_cords
-        self._eaten_cords = eaten_cords
+        self._start_tile: int = start_tile
+        self._target_tile: int = target_tile
+        self._eaten_tiles: list[tuple[int, int]] = eaten_tiles
 
     def __str__(self) -> str:
-        return f"{self.start_cords} => {self.target_cords}: {self.eaten_cords}"
+        return f"{self._start_tile} => {self._target_tile}: {self._eaten_tiles}"
 
     def __repr__(self) -> str:
         return self.__str__()
 
     @property
-    def start_cords(self):
-        return self._start_cords
+    def start_tile(self):
+        return self._start_tile
 
-    @start_cords.setter
-    def start_cords(self, start_cords: tuple):
-        self._start_cords = start_cords
-
-    @property
-    def target_cords(self):
-        return self._target_cords
-
-    @target_cords.setter
-    def target_cords(self, target_cords: tuple):
-        self._target_cords = target_cords
+    @start_tile.setter
+    def start_tile(self, start_tile: tuple):
+        self._start_tile = start_tile
 
     @property
-    def eaten_cords(self):
-        return self._eaten_cords
+    def target_tile(self):
+        return self._target_tile
 
-    @eaten_cords.setter
-    def eaten_cords(self, eaten_cords: list):
-        self._eaten_cords = eaten_cords
+    @target_tile.setter
+    def target_tile(self, target_tile: tuple):
+        self._target_tile = target_tile
+
+    @property
+    def eaten_tiles(self):
+        return self._eaten_tiles
+
+    @eaten_tiles.setter
+    def eaten_tiles(self, eaten_tiles: list):
+        self._eaten_tiles = eaten_tiles

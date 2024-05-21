@@ -1,23 +1,15 @@
+from Constants import *
 from Move import Move
-from TileState import TileState
+from Piece import Piece
 
 
 class Board(object):
-    # Static variables:
-    ROWS = 8
-    COLS = 8
-
-    LEFT_BORDER = 0
-    RIGHT_BORDER = COLS - 1
-    TOP_BORDER = 0
-    BOTTOM_BORDER = ROWS - 1
-
     def __init__(self):
-        self._board = []
-        self._whites_left = 12
-        self._blacks_left = 12
-        self._white_queens = 0
-        self._black_queens = 0
+        self._board: list[Piece] = []
+        self._whites_left: int = 12
+        self._blacks_left: int = 12
+        self._white_queens: int = 0
+        self._black_queens: int = 0
 
         self.create_new_board()
 
@@ -36,93 +28,88 @@ class Board(object):
         whites = [0, 0, 0, 0, 0, 0, 0]
         blacks = [0, 0, 0, 0, 0, 0, 0]
 
-        for row in range(Board.ROWS):
-            for col in range(Board.COLS):
-                if (row + col) % 2 == 0:
-                    continue
+        for tile_number in range(ROWS * COLS):
+            row = tile_number // COLS
+            col = tile_number % COLS
+            if (row + col) % 2 == 0:
+                continue
 
-                piece = self.get_piece((row, col))
-                if piece.is_empty():
-                    continue
+            piece = self.get_piece(tile_number)
+            if piece.is_empty():
+                continue
 
-                if piece.is_white():
-                    if not piece.is_queen():
-                        whites[0] += 1
-                    else:
-                        whites[1] += 1
-                    if row == Board.BOTTOM_BORDER:
-                        whites[2] += 1
-                        whites[6] += 1
-                        continue
-                    if row == 3 or row == 4:
-                        if 2 <= col <= 5:
-                            whites[3] += 1
-                        else:
-                            whites[4] += 1
-                    if (
-                        row > Board.TOP_BORDER
-                        and Board.LEFT_BORDER < col < Board.RIGHT_BORDER
-                    ):
-                        if (
-                            self.get_piece((row - 1, col - 1)).is_black()
-                            and self.get_piece((row + 1, col + 1)).is_empty()
-                        ):
-                            whites[5] += 1
-                        if (
-                            self.get_piece((row - 1, col + 1)).is_black()
-                            and self.get_piece((row + 1, col - 1)).is_empty()
-                        ):
-                            whites[5] += 1
-                    if row < Board.BOTTOM_BORDER:
-                        if col == Board.LEFT_BORDER or col == Board.RIGHT_BORDER:
-                            whites[6] += 1
-                        elif (
-                            self.get_piece((row + 1, col - 1)).is_white()
-                            or not self.get_piece((row + 1, col - 1)).is_queen()
-                        ) and (
-                            self.get_piece((row + 1, col + 1)).is_white()
-                            or not self.get_piece((row + 1, col + 1)).is_queen()
-                        ):
-                            whites[6] += 1
+            if piece.is_white():
+                if not piece.is_queen():
+                    whites[0] += 1
                 else:
-                    if piece.is_black():
-                        blacks[0] += 1
+                    whites[1] += 1
+                if row == BOTTOM_BORDER:
+                    whites[2] += 1
+                    whites[6] += 1
+                    continue
+                if row == 3 or row == 4:
+                    if 2 <= col <= 5:
+                        whites[3] += 1
                     else:
-                        blacks[1] += 1
-                    if row == Board.TOP_BORDER:
-                        blacks[2] += 1
-                        blacks[6] += 1
-                        continue
-                    if row == 3 or row == 4:
-                        if 2 <= col <= 5:
-                            blacks[3] += 1
-                        else:
-                            blacks[4] += 1
+                        whites[4] += 1
+                if row > TOP_BORDER and LEFT_BORDER < col < RIGHT_BORDER:
                     if (
-                        row < Board.BOTTOM_BORDER
-                        and Board.LEFT_BORDER < col < Board.RIGHT_BORDER
+                        self.get_piece((row - 1) * COLS + col - 1).is_black()
+                        and self.get_piece((row + 1) * COLS + col + 1).is_empty()
                     ):
-                        if (
-                            self.get_piece((row + 1, col - 1)).is_white()
-                            and self.get_piece((row - 1, col + 1)).is_empty()
-                        ):
-                            blacks[5] += 1
-                        if (
-                            self.get_piece((row + 1, col + 1)).is_white()
-                            and self.get_piece((row - 1, col - 1)).is_empty()
-                        ):
-                            blacks[5] += 1
-                    if row > Board.TOP_BORDER:
-                        if col == Board.LEFT_BORDER or col == Board.RIGHT_BORDER:
-                            blacks[6] += 1
-                        elif (
-                            self.get_piece((row - 1, col - 1)).is_black()
-                            or not self.get_piece((row - 1, col - 1)).is_queen()
-                        ) and (
-                            self.get_piece((row - 1, col + 1)).is_black()
-                            or not self.get_piece((row - 1, col + 1)).is_queen()
-                        ):
-                            blacks[6] += 1
+                        whites[5] += 1
+                    if (
+                        self.get_piece((row - 1) * COLS + col + 1).is_black()
+                        and self.get_piece((row + 1) * COLS + col - 1).is_empty()
+                    ):
+                        whites[5] += 1
+                if row < BOTTOM_BORDER:
+                    if col == LEFT_BORDER or col == RIGHT_BORDER:
+                        whites[6] += 1
+                    elif (
+                        self.get_piece((row + 1) * COLS + col - 1).is_white()
+                        or not self.get_piece((row + 1) * COLS + col - 1).is_queen()
+                    ) and (
+                        self.get_piece((row + 1) * COLS + col + 1).is_white()
+                        or not self.get_piece((row + 1) * COLS + col + 1).is_queen()
+                    ):
+                        whites[6] += 1
+            else:
+                if piece.is_black():
+                    blacks[0] += 1
+                else:
+                    blacks[1] += 1
+                if row == TOP_BORDER:
+                    blacks[2] += 1
+                    blacks[6] += 1
+                    continue
+                if row == 3 or row == 4:
+                    if 2 <= col <= 5:
+                        blacks[3] += 1
+                    else:
+                        blacks[4] += 1
+                if row < BOTTOM_BORDER and LEFT_BORDER < col < RIGHT_BORDER:
+                    if (
+                        self.get_piece((row + 1) * COLS + col - 1).is_white()
+                        and self.get_piece((row - 1) * COLS + col + 1).is_empty()
+                    ):
+                        blacks[5] += 1
+                    if (
+                        self.get_piece((row + 1) * COLS + col + 1).is_white()
+                        and self.get_piece((row - 1) * COLS + col - 1).is_empty()
+                    ):
+                        blacks[5] += 1
+                if row > TOP_BORDER:
+                    if col == LEFT_BORDER or col == RIGHT_BORDER:
+                        blacks[6] += 1
+                    elif (
+                        self.get_piece((row - 1) * COLS + col - 1).is_black()
+                        or not self.get_piece((row - 1) * COLS + col - 1).is_queen()
+                    ) and (
+                        self.get_piece((row - 1) * COLS + col + 1).is_black()
+                        or not self.get_piece((row - 1) * COLS + col + 1).is_queen()
+                    ):
+                        blacks[6] += 1
         weights = [5, 7.5, 4, 2.5, 0.5, -3, 3]
         score = 0
         for i in range(7):
@@ -130,156 +117,162 @@ class Board(object):
         return score
 
     def create_new_board(self):
-        self._board = [[TileState.EMPTY for i in range(8)] for j in range(8)]
+        self._board = [None] * ROWS * COLS
         # Set the initial state of the board:
-        for row in range(8):
-            for col in range(8):
-                if (row + col) % 2 == 1:
-                    if row < 3:
-                        self._board[row][col] = TileState.BLACK_PIECE
-                    elif row > 4:
-                        self._board[row][col] = TileState.WHITE_PIECE
+        for tile_number in range(ROWS * COLS):
+            row = tile_number // COLS
+            col = tile_number % COLS
+            self._board[tile_number] = Piece(row, col, EMPTY_TILE)
+            if (row + col) % 2 == 1:
+                if row <= 2:
+                    self._board[tile_number].piece = BLACK_PIECE
+                elif row >= 5:
+                    self._board[tile_number].piece = WHITE_PIECE
 
-    def get_piece(self, cords: tuple[int, int]) -> TileState:
-        return self._board[cords[0]][cords[1]]
-
-    def set_piece(self, cords: tuple[int, int], type: TileState) -> None:
-        self._board[cords[0]][cords[1]] = type
+    def get_piece(self, tile_number: int) -> Piece:
+        return self._board[tile_number]
 
     def _calculate_next_jumps(
         self,
-        org_cords: tuple[int, int],
-        piece_cords: tuple[int, int],
+        org_tile: int,
+        piece_tile: int,
         dir: tuple[int, int],
-        all_turn_moves: list,
+        all_moves: list[Move],
         eaten: list,
     ):
-        piece = self.get_piece(org_cords)
-        is_queen = piece.is_queen()
+        org_piece = self.get_piece(org_tile)
+        cur_piece = self.get_piece(piece_tile)
+
         short_dirs = (
             [(dir[0], dir[1]), (dir[0], -dir[1]), (-dir[0], dir[1])]
-            if is_queen
+            if org_piece.is_queen()
             else [(dir[0], dir[1]), (dir[0], -dir[1])]
         )
 
         for sh_dir in short_dirs:
-            short_cords = (piece_cords[0] + sh_dir[0], piece_cords[1] + sh_dir[1])
+            short_cords = (cur_piece.row + sh_dir[0], cur_piece.col + sh_dir[1])
             if (
-                Board.TOP_BORDER <= short_cords[0] <= Board.BOTTOM_BORDER
-                and Board.LEFT_BORDER <= short_cords[1] <= Board.RIGHT_BORDER
+                TOP_BORDER <= short_cords[0] <= BOTTOM_BORDER
+                and LEFT_BORDER <= short_cords[1] <= RIGHT_BORDER
             ):
-                short_piece = self.get_piece(short_cords)
+                # Getting the piece on the short diagonal tile:
+                short_tile = short_cords[0] * COLS + short_cords[1]
+                short_piece = self.get_piece(short_tile)
 
                 if short_piece.is_empty():
                     continue
-                if short_piece.get_color() == piece.opposite_color():
+                if short_piece.is_opposite_color(org_piece):
                     adv_cords = (
-                        piece_cords[0] + 2 * sh_dir[0],
-                        piece_cords[1] + 2 * sh_dir[1],
+                        cur_piece.row + 2 * sh_dir[0],
+                        cur_piece.col + 2 * sh_dir[1],
                     )
                     if (
-                        Board.TOP_BORDER <= adv_cords[0] <= Board.BOTTOM_BORDER
-                        and Board.LEFT_BORDER <= adv_cords[1] <= Board.RIGHT_BORDER
+                        TOP_BORDER <= adv_cords[0] <= BOTTOM_BORDER
+                        and LEFT_BORDER <= adv_cords[1] <= RIGHT_BORDER
                     ):
-                        adv_piece = self.get_piece(adv_cords)
+                        # Getting the piece on the longer diagonal tile:
+                        adv_tile = adv_cords[0] * COLS + adv_cords[1]
+                        adv_piece = self.get_piece(adv_tile)
+
                         if adv_piece.is_empty():
-                            new_eaten = eaten + [
-                                (short_cords[0], short_cords[1], short_piece)
-                            ]
-                            all_turn_moves.append(Move(org_cords, adv_cords, new_eaten))
+                            new_eaten = eaten + [(short_tile, short_piece.piece)]
+                            all_moves.append(Move(org_tile, adv_tile, new_eaten))
                             self._calculate_next_jumps(
-                                org_cords, adv_cords, sh_dir, all_turn_moves, new_eaten
+                                adv_tile, adv_tile, sh_dir, all_moves, new_eaten
                             )
 
-    def calculate_next_moves(self, piece_cords: tuple, all_turn_moves: list):
+    def calculate_next_moves(self, piece_tile: int) -> list[Move]:
+        all_moves = []
         # Basic data:
-        piece = self.get_piece(piece_cords)
+        piece = self.get_piece(piece_tile)
         if piece.is_empty():
             return
 
-        is_queen = piece.is_queen()
-        row_dir = -1 if piece == TileState.WHITE_PIECE else 1
+        row_dir = -1 if piece.is_white() else 1
         short_dirs = (
             [(row_dir, 1), (row_dir, -1), (-row_dir, 1), (-row_dir, -1)]
-            if is_queen
+            if piece.is_queen()
             else [(row_dir, 1), (row_dir, -1)]
         )
 
         for sh_dir in short_dirs:
-            short_cords = (piece_cords[0] + sh_dir[0], piece_cords[1] + sh_dir[1])
+            short_cords = (piece.row + sh_dir[0], piece.col + sh_dir[1])
             if (
-                Board.TOP_BORDER <= short_cords[0] <= Board.BOTTOM_BORDER
-                and Board.LEFT_BORDER <= short_cords[1] <= Board.RIGHT_BORDER
+                TOP_BORDER <= short_cords[0] <= BOTTOM_BORDER
+                and LEFT_BORDER <= short_cords[1] <= RIGHT_BORDER
             ):
-                short_piece = self.get_piece(short_cords)
+                # Getting the piece on the short diagonal tile:
+                short_tile = short_cords[0] * COLS + short_cords[1]
+                short_piece = self.get_piece(short_tile)
+
                 if short_piece.is_empty():
-                    all_turn_moves.append(Move(piece_cords, short_cords))
-                elif short_piece.get_color() == piece.opposite_color():
+                    # Adding a simple move:
+                    all_moves.append(Move(piece_tile, short_tile))
+                elif short_piece.is_opposite_color(piece):
                     adv_cords = (
-                        short_cords[0] + sh_dir[0],
-                        short_cords[1] + sh_dir[1],
+                        short_piece.row + sh_dir[0],
+                        short_piece.col + sh_dir[1],
                     )
                     if (
-                        Board.TOP_BORDER <= adv_cords[0] <= Board.BOTTOM_BORDER
-                        and Board.LEFT_BORDER <= adv_cords[1] <= Board.RIGHT_BORDER
+                        TOP_BORDER <= adv_cords[0] <= BOTTOM_BORDER
+                        and LEFT_BORDER <= adv_cords[1] <= RIGHT_BORDER
                     ):
-                        adv_piece = self.get_piece(adv_cords)
+                        # Getting the piece on the longer diagonal tile:
+                        adv_tile = adv_cords[0] * COLS + adv_cords[1]
+                        adv_piece = self.get_piece(adv_tile)
                         if adv_piece.is_empty():
-                            eaten = [(short_cords[0], short_cords[1], short_piece)]
-                            all_turn_moves.append(Move(piece_cords, adv_cords, eaten))
+                            # Adding a piece to eat:
+                            eaten = [(short_tile, short_piece.piece)]
+                            all_moves.append(Move(piece_tile, adv_tile, eaten))
                             self._calculate_next_jumps(
-                                piece_cords, adv_cords, sh_dir, all_turn_moves, eaten
+                                piece_tile, adv_tile, sh_dir, all_moves, eaten
                             )
+        # Sorting moves by the number of eaten pieces:
+        all_moves.sort(key=lambda mov: len(mov.eaten_tiles), reverse=True)
+        return all_moves
 
-    def get_all_pieces(self, color: TileState) -> list:
+    def get_all_piece_tiles(self, color: int) -> list[int]:
         """
-        Returns a list of all cordinates of pieces of the given color.
+        Returns a list of tile numbers of pieces of the given color.
         """
-        assert color == TileState.WHITE_COLOR or color == TileState.BLACK_COLOR
+        assert color == WHITE_COLOR or color == BLACK_COLOR
 
         pieces = []
-        for row in range(Board.ROWS):
-            for col in range(Board.COLS):
-                piece = self.get_piece((row, col))
-                if not piece.is_empty() and piece.get_color() == color:
-                    pieces.append((row, col))
+        for piece in self._board:
+            if not piece.is_empty() and piece.is_color(color):
+                pieces.append(piece.row * COLS + piece.col)
         return pieces
 
-    def calculate_all_turn_moves(self, color: TileState) -> list[Move]:
-        assert color == TileState.WHITE_COLOR or color == TileState.BLACK_COLOR
+    def calculate_all_turn_moves(self, color: int) -> list[Move]:
+        assert color == WHITE_COLOR or color == BLACK_COLOR
         all_turn_moves = []
-        pieces = self.get_all_pieces(color)
-        for piece in pieces:
-            self.calculate_next_moves(piece, all_turn_moves)
+        piece_tiles = self.get_all_piece_tiles(color)
+        for piece_tile in piece_tiles:
+            all_turn_moves += self.calculate_next_moves(piece_tile)
         # Sorting moves by the number of eaten pieces:
-        all_turn_moves.sort(key=lambda x: len(x.eaten_cords), reverse=True)
+        all_turn_moves.sort(key=lambda mov: len(mov.eaten_tiles), reverse=True)
         return all_turn_moves
 
     def make_move(self, move: Move):
-        start_cords = move.start_cords
-        target_cords = move.target_cords
-        eaten_cords = move.eaten_cords
+        start_piece = self.get_piece(move.start_tile)
+        target_piece = self.get_piece(move.target_tile)
         # Potential queen promotion:
-        start_piece = self.get_piece(start_cords)
-        if (
-            target_cords[0] == Board.TOP_BORDER
-            or target_cords[0] == Board.BOTTOM_BORDER
-        ):
-            self.set_piece(target_cords, start_piece.promote_to_queen())
+        if target_piece.row == TOP_BORDER or target_piece.row == BOTTOM_BORDER:
+            target_piece.piece = start_piece.promoted_to_queen()
             if start_piece.is_white():
                 self._white_queens += 1
             else:
                 self._black_queens += 1
         else:
-            self.set_piece(target_cords, start_piece)
+            target_piece.piece = start_piece.piece
 
-        self.set_piece(start_cords, TileState.EMPTY)
+        start_piece.piece = EMPTY_TILE
+
         # Removing eaten pieces:
-        for cords in eaten_cords:
-            eaten_piece = cords[2]
-            is_queen = eaten_piece.is_queen()
+        for eaten_tile, piece_type in move.eaten_tiles:
+            eaten_piece = self.get_piece(eaten_tile)
             # Decreasing number of pieces:
-            if is_queen:
+            if eaten_piece.is_queen():
                 if eaten_piece.is_white():
                     self._white_queens -= 1
                     self._whites_left -= 1
@@ -292,58 +285,55 @@ class Board(object):
                 else:
                     self._blacks_left -= 1
 
-            self.set_piece((cords[0], cords[1]), TileState.EMPTY)
+            eaten_piece.piece = EMPTY_TILE
 
     def undo_move(self, move: Move):
-        start_cords = move.start_cords
-        target_cords = move.target_cords
-        eaten_cords = move.eaten_cords
+        start_piece = self.get_piece(move.start_tile)
+        target_piece = self.get_piece(move.target_tile)
         # Potential queen demotion:
-        end_piece = self.get_piece(target_cords)
-        if (
-            target_cords[0] == Board.TOP_BORDER
-            or target_cords[0] == Board.BOTTOM_BORDER
-        ):
-            if end_piece.is_white():
+        if target_piece.row == TOP_BORDER or target_piece.row == BOTTOM_BORDER:
+            if target_piece.is_white():
                 self._white_queens -= 1
             else:
                 self._black_queens -= 1
-            self.set_piece(start_cords, end_piece.demote_to_piece())
+            start_piece.piece = target_piece.demoted_to_piece()
         else:
-            self.set_piece(start_cords, end_piece)
+            start_piece.piece = target_piece.piece
 
-        self.set_piece(target_cords, TileState.EMPTY)
+        target_piece.piece = EMPTY_TILE
+
         # Adding eaten pieces:
-        for cords in eaten_cords:
-            eaten_piece = cords[2]
-            is_queen = eaten_piece.is_queen()
+        for eaten_tile, piece_type in move.eaten_tiles:
+            eaten_piece = self.get_piece(eaten_tile)
             # Increase number of pieces:
-            if is_queen:
-                if eaten_piece.is_white():
+            if Piece.is_piece_queen(piece_type):
+                if Piece.is_piece_white(piece_type):
                     self._white_queens += 1
                     self._whites_left += 1
                 else:
                     self._black_queens += 1
                     self._blacks_left += 1
             else:
-                if eaten_piece.is_white():
+                if Piece.is_piece_white(piece_type):
                     self._whites_left += 1
                 else:
                     self._blacks_left += 1
 
-            self.set_piece((cords[0], cords[1]), cords[2])
+            eaten_piece.piece = piece_type
 
-    def __str__(self):
-        # ans = ""
-        # row_num = 0
-        # for row in self._board:
-        #    ans += (str(row) + "\n") if row_num != 7 else str(row)
-        #    row_num += 1
-        # return ans
-        return super().__str__()
+    def __str__(self) -> str:
+        ans = ""
+        for tile_number in range(ROWS * COLS):
+            ans += str(self._board[tile_number])
+            if tile_number % COLS == RIGHT_BORDER:
+                ans += "\n"
+        return ans
 
-    def __eq__(self, other):
-        return self._board == other._board
+    def __repr__(self) -> str:
+        return self.__str__()
 
-    def __hash__(self):
-        return hash(self._board)
+
+if __name__ == "__main__":
+    brd = Board()
+    print(brd)
+    print(brd.calculate_all_turn_moves(BLACK_COLOR))
