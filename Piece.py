@@ -14,6 +14,9 @@ class Piece(object):
 
     def is_piece_black(piece) -> bool:
         return bool(piece & BLACK_COLOR)
+    
+    def get_oposite_piece_color(piece) -> int:
+        return piece ^ (WHITE_COLOR | BLACK_COLOR)
 
     def __init__(self, row: int, col: int, piece: int) -> None:
         self._row = row

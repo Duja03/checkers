@@ -7,7 +7,8 @@ def minimax(
     depth: int, 
     alpha: float, 
     beta: float, 
-    is_maximising_player: bool
+    is_maximising_player: bool,
+    forced_jumping: bool = False
 ):
     if depth == 0 or state.is_game_over():
         return state.evaluate(), None
@@ -17,9 +18,9 @@ def minimax(
     if is_maximising_player:
         max_eval = float("-inf")
         best_move = None
-        for move in state.calculate_all_turn_moves(BLACK_COLOR):
+        for move in state.calculate_all_turn_moves(BLACK_COLOR, forced_jumping):
             state.make_move(move)
-            eval = minimax(state, depth - 1, alpha, beta, maximizing)[0]
+            eval = minimax(state, depth - 1, alpha, beta, maximizing, forced_jumping)[0]
             state.undo_move(move)
             if eval > max_eval:
                 max_eval = eval
@@ -31,9 +32,9 @@ def minimax(
     else:
         min_eval = float("inf")
         best_move = None
-        for move in state.calculate_all_turn_moves(WHITE_COLOR):
+        for move in state.calculate_all_turn_moves(WHITE_COLOR, forced_jumping):
             state.make_move(move)
-            eval = minimax(state, depth - 1, alpha, beta, maximizing)[0]
+            eval = minimax(state, depth - 1, alpha, beta, maximizing, forced_jumping)[0]
             state.undo_move(move)
             if eval < min_eval:
                 min_eval = eval

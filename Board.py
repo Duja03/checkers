@@ -25,6 +25,10 @@ class Board(object):
         return self._blacks_left == 0 or self._whites_left == 0
 
     def evaluate(self):
+        if self._whites_left <= 0:
+            return float("inf")
+        elif self._blacks_left <= 0:
+            return float("-inf")
         whites = [0, 0, 0, 0, 0, 0, 0]
         blacks = [0, 0, 0, 0, 0, 0, 0]
 
@@ -181,7 +185,9 @@ class Board(object):
                                 adv_tile, adv_tile, sh_dir, all_moves, new_eaten
                             )
 
-    def calculate_next_moves(self, piece_tile: int) -> list[Move]:
+    def calculate_next_moves(
+        self, piece_tile: int, forced_jumping: bool = False
+    ) -> list[Move]:
         all_moves = []
         # Basic data:
         piece = self.get_piece(piece_tile)
@@ -195,7 +201,13 @@ class Board(object):
             else [(row_dir, 1), (row_dir, -1)]
         )
 
+        added_jump_move = False
+        short_moves = []
+
         for sh_dir in short_dirs:
+            if forced_jumping and added_jump_move:
+                break
+
             short_cords = (piece.row + sh_dir[0], piece.col + sh_dir[1])
             if (
                 TOP_BORDER <= short_cords[0] <= BOTTOM_BORDER
@@ -205,10 +217,7 @@ class Board(object):
                 short_tile = short_cords[0] * COLS + short_cords[1]
                 short_piece = self.get_piece(short_tile)
 
-                if short_piece.is_empty():
-                    # Adding a simple move:
-                    all_moves.append(Move(piece_tile, short_tile))
-                elif short_piece.is_opposite_color(piece):
+                if not short_piece.is_empty() and short_piece.is_opposite_color(piece):
                     adv_cords = (
                         short_piece.row + sh_dir[0],
                         short_piece.col + sh_dir[1],
@@ -220,13 +229,23 @@ class Board(object):
                         # Getting the piece on the longer diagonal tile:
                         adv_tile = adv_cords[0] * COLS + adv_cords[1]
                         adv_piece = self.get_piece(adv_tile)
+
                         if adv_piece.is_empty():
                             # Adding a piece to eat:
+                            added_jump_move = True
                             eaten = [(short_tile, short_piece.piece)]
                             all_moves.append(Move(piece_tile, adv_tile, eaten))
                             self._calculate_next_jumps(
                                 piece_tile, adv_tile, sh_dir, all_moves, eaten
                             )
+                elif short_piece.is_empty():
+                    if forced_jumping:
+                        short_moves.append(Move(piece_tile, short_tile))
+                    else:
+                        all_moves.append(Move(piece_tile, short_tile))
+
+        if forced_jumping and not added_jump_move:
+            all_moves = short_moves
         # Sorting moves by the number of eaten pieces:
         all_moves.sort(key=lambda mov: len(mov.eaten_tiles), reverse=True)
         return all_moves
@@ -243,12 +262,14 @@ class Board(object):
                 pieces.append(piece.row * COLS + piece.col)
         return pieces
 
-    def calculate_all_turn_moves(self, color: int) -> list[Move]:
+    def calculate_all_turn_moves(
+        self, color: int, forced_jumping: bool = False
+    ) -> list[Move]:
         assert color == WHITE_COLOR or color == BLACK_COLOR
         all_turn_moves = []
         piece_tiles = self.get_all_piece_tiles(color)
         for piece_tile in piece_tiles:
-            all_turn_moves += self.calculate_next_moves(piece_tile)
+            all_turn_moves += self.calculate_next_moves(piece_tile, forced_jumping)
         # Sorting moves by the number of eaten pieces:
         all_turn_moves.sort(key=lambda mov: len(mov.eaten_tiles), reverse=True)
         return all_turn_moves
