@@ -12,8 +12,8 @@ from Move import Move
 class Game(object):
     def __init__(self, window: pygame.Surface) -> None:
         self._window = window
-        self._text_font = pygame.font.SysFont("Arial", 30, True)
-        self._header_font = pygame.font.SysFont("Arial", 72, True)
+        self._text_font = pygame.font.SysFont("Arial", 30)
+        self._header_font = pygame.font.SysFont("Arial", 72)
         self.single_x = SCREEN_WIDTH // 2 - BUTTON_WIDTH // 2
         self.single_y = SCREEN_HEIGHT // 2 - BUTTON_HEIGHT - 20
         self.multi_x = self.single_x
@@ -22,7 +22,7 @@ class Game(object):
         self.mode_y = self.multi_y + BUTTON_HEIGHT + 70
         self.play_again_x = self.multi_x
         self.play_again_y = self.multi_y + 50
-        
+
         self.reset()
 
     def reset(self) -> None:
@@ -72,7 +72,7 @@ class Game(object):
         else:
             text = "Black won!"
         text_surface = self._header_font.render(text, True, HEADER_COLOR)
-        text_x = SCREEN_WIDTH // 2 - 150
+        text_x = SCREEN_WIDTH // 2 - 140
         text_y = SCREEN_HEIGHT // 2 - 80
         self._window.blit(text_surface, (text_x, text_y))
         # Drawing return button:
@@ -207,7 +207,7 @@ class Game(object):
         )
         # Drawing header:
         header_surface = self._header_font.render("Checkers", True, HEADER_COLOR)
-        header_x = SCREEN_WIDTH // 2 - 135
+        header_x = SCREEN_WIDTH // 2 - 130
         header_y = SCREEN_HEIGHT // 10
         self._window.blit(header_surface, (header_x, header_y))
         # Single player button:
@@ -243,7 +243,7 @@ class Game(object):
         multi_btn_y = self.multi_y + 16
         self._window.blit(multi_surface, (multi_btn_x, multi_btn_y))
         # Render mode selection text:
-        mode_surface = self._text_font.render("Forced jumping", True, BUTTON_COLOR)
+        mode_surface = self._text_font.render("Forced jumping?", True, BUTTON_COLOR)
         mode_x = self.mode_x
         mode_y = self.mode_y - 45
         self._window.blit(mode_surface, (mode_x, mode_y))
@@ -291,7 +291,7 @@ class Game(object):
         board = deepcopy(self._board.board)
         value, move = minimax(
             self._board,
-            6,
+            8,
             float("-inf"),
             float("inf"),
             self._turn_color == BLACK_COLOR,

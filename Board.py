@@ -182,7 +182,7 @@ class Board(object):
                             new_eaten = eaten + [(short_tile, short_piece.piece)]
                             all_moves.append(Move(org_tile, adv_tile, new_eaten))
                             self._calculate_next_jumps(
-                                adv_tile, adv_tile, sh_dir, all_moves, new_eaten
+                                org_tile, adv_tile, sh_dir, all_moves, new_eaten
                             )
 
     def calculate_next_moves(
@@ -246,8 +246,6 @@ class Board(object):
 
         if forced_jumping and not added_jump_move:
             all_moves = short_moves
-        # Sorting moves by the number of eaten pieces:
-        all_moves.sort(key=lambda mov: len(mov.eaten_tiles), reverse=True)
         return all_moves
 
     def get_all_piece_tiles(self, color: int) -> list[int]:

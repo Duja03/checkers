@@ -3,12 +3,12 @@ from Constants import *
 
 
 def minimax(
-    state: Board, 
-    depth: int, 
-    alpha: float, 
-    beta: float, 
+    state: Board,
+    depth: int,
+    alpha: float,
+    beta: float,
     is_maximising_player: bool,
-    forced_jumping: bool = False
+    forced_jumping: bool = False,
 ):
     if depth == 0 or state.is_game_over():
         return state.evaluate(), None
