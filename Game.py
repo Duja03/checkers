@@ -7,6 +7,7 @@ from Algorithm import minimax
 from Board import Board
 from Constants import *
 from Move import Move
+from Piece import Piece
 
 
 class Game(object):
@@ -37,6 +38,8 @@ class Game(object):
         self.singleplayer = True
         self.game_over = False
         self.white_won = False
+        self.played_move: Move = None
+        self.selected_color = SELECTED_TILE_WHITE_COLOR
 
     @property
     def turn_color(self) -> int:
@@ -59,6 +62,7 @@ class Game(object):
             self.draw_main_menu()
         if self.show_game:
             self.draw_board()
+            self.draw_played_move()
             self.draw_pieces()
             self.draw_valid_moves()
         if self.game_over:
@@ -188,17 +192,143 @@ class Game(object):
                 )
 
     def draw_valid_moves(self) -> None:
+        surf = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
+        alpha = (80,)
+
         for move in self._current_turn_moves:
-            target_piece = self._board.get_piece(move.target_tile)
-            pygame.draw.circle(
-                self._window,
-                VALID_MOVE_COLOR,
-                (
-                    target_piece.col * TILE_SIZE + TILE_SIZE // 2 + BOARD_OUTLINE_SIZE,
-                    target_piece.row * TILE_SIZE + TILE_SIZE // 2 + BOARD_OUTLINE_SIZE,
-                ),
-                TILE_SIZE // 10,
+            move_tile = move.target_tile
+            org_tile = move.start_tile
+
+            row = move_tile // COLS
+            col = move_tile % COLS
+
+            piece = self._board.get_piece(org_tile)
+
+            color = (
+                WHITE_PIECE_COLOR + alpha
+                if piece.is_white()
+                else BLACK_PIECE_COLOR + alpha
             )
+            shadow = (
+                WHITE_PIECE_SHADOW_COLOR + alpha
+                if piece.is_white()
+                else BLACK_PIECE_SHADOW_COLOR + alpha
+            )
+
+            # Shadow of piece:
+            pygame.draw.circle(
+                surf,
+                shadow,
+                (
+                    col * TILE_SIZE + TILE_SIZE // 2 + BOARD_OUTLINE_SIZE,
+                    row * TILE_SIZE
+                    + TILE_SIZE // 2
+                    + BOARD_OUTLINE_SIZE
+                    + SHADOW_SIZE // 2,
+                ),
+                TILE_SIZE // 2 - 10,
+            )
+            pygame.draw.circle(
+                surf,
+                color,
+                (
+                    col * TILE_SIZE + TILE_SIZE // 2 + BOARD_OUTLINE_SIZE,
+                    row * TILE_SIZE
+                    + TILE_SIZE // 2
+                    + BOARD_OUTLINE_SIZE
+                    - SHADOW_SIZE // 2,
+                ),
+                TILE_SIZE // 2 - 10,
+            )
+
+            queen_color = (
+                WHITE_PIECE_SHADOW_COLOR + alpha
+                if piece.is_white()
+                else BLACK_PIECE_SHADOW_COLOR + alpha
+            )
+
+            # Drawing queen:
+            if piece.is_queen():
+                pygame.draw.circle(
+                    surf,
+                    queen_color,
+                    (
+                        col * TILE_SIZE + TILE_SIZE // 2 + BOARD_OUTLINE_SIZE,
+                        row * TILE_SIZE
+                        + TILE_SIZE // 2
+                        + BOARD_OUTLINE_SIZE
+                        - SHADOW_SIZE // 2,
+                    ),
+                    TILE_SIZE // 2 - 15,
+                )
+                pygame.draw.circle(
+                    surf,
+                    color,
+                    (
+                        col * TILE_SIZE + TILE_SIZE // 2 + BOARD_OUTLINE_SIZE,
+                        row * TILE_SIZE
+                        + TILE_SIZE // 2
+                        + BOARD_OUTLINE_SIZE
+                        - SHADOW_SIZE // 2,
+                    ),
+                    TILE_SIZE // 2 - 18,
+                )
+
+        self._window.blit(surf, (0, 0))
+
+    def draw_played_move(self) -> None:
+        if self.played_move is None:
+            return
+        # Outline tile on which the piece was moved:
+        start_tile = self.played_move.start_tile
+        start_row = start_tile // COLS
+        start_col = start_tile % COLS
+        # Fill inside of the tile:
+        pygame.draw.rect(
+            self._window,
+            self.selected_color,
+            (
+                start_col * TILE_SIZE + BOARD_OUTLINE_SIZE,
+                start_row * TILE_SIZE + BOARD_OUTLINE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE,
+            ),
+        )
+        pygame.draw.rect(
+            self._window,
+            BLACK_TILE_COLOR,
+            (
+                start_col * TILE_SIZE + BOARD_OUTLINE_SIZE + PLAYED_TILE_OUTLINE_SIZE,
+                start_row * TILE_SIZE + BOARD_OUTLINE_SIZE + PLAYED_TILE_OUTLINE_SIZE,
+                TILE_SIZE - 2 * PLAYED_TILE_OUTLINE_SIZE,
+                TILE_SIZE - 2 * PLAYED_TILE_OUTLINE_SIZE,
+            ),
+        )
+        # Fill inside of the tile:
+        end_tile = self.played_move.target_tile
+        end_row = end_tile // COLS
+        end_col = end_tile % COLS
+        # Outline tile from which the piece was moved:
+        pygame.draw.rect(
+            self._window,
+            self.selected_color,
+            (
+                end_col * TILE_SIZE + BOARD_OUTLINE_SIZE,
+                end_row * TILE_SIZE + BOARD_OUTLINE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE,
+            ),
+        )
+        pygame.draw.rect(
+            self._window,
+            BLACK_TILE_COLOR,
+            (
+                end_col * TILE_SIZE + BOARD_OUTLINE_SIZE + PLAYED_TILE_OUTLINE_SIZE,
+                end_row * TILE_SIZE + BOARD_OUTLINE_SIZE + PLAYED_TILE_OUTLINE_SIZE,
+                TILE_SIZE - 2 * PLAYED_TILE_OUTLINE_SIZE,
+                TILE_SIZE - 2 * PLAYED_TILE_OUTLINE_SIZE,
+            ),
+        )
 
     def draw_main_menu(self) -> None:
         # Background:
@@ -291,7 +421,7 @@ class Game(object):
         board = deepcopy(self._board.board)
         value, move = minimax(
             self._board,
-            8,
+            7,
             float("-inf"),
             float("inf"),
             self._turn_color == BLACK_COLOR,
@@ -316,18 +446,22 @@ class Game(object):
             self.show_game = False
             self.white_won = True
 
+        self.selected_color = SELECTED_TILE_BLACK_COLOR
         print(f"It took it: {elapsed_time} seconds to find a move.")
 
     def make_move(self, move: Move):
         self._board.make_move(move)
         self.change_turn()
         self.move_stack.append(move)
+        self.played_move = move
 
     def undo(self):
         if self.move_stack:
             move = self.move_stack.pop()
+            self.selected_color = UNDO_SELECTED_TILE_COLOR
             self._board.undo_move(move)
             self.change_turn()
+            self.played_move = move
 
     def select_piece(self, cords: tuple[int, int]) -> None:
         selected_tile = cords[0] * COLS + cords[1]
@@ -349,11 +483,14 @@ class Game(object):
                     move.start_tile == self._selected_piece
                     and move.target_tile == selected_tile
                 ):
-                    self._board.make_move(move)
+                    self.selected_color = (
+                        SELECTED_TILE_WHITE_COLOR
+                        if Piece.is_piece_white(self.turn_color)
+                        else SELECTED_TILE_BLACK_COLOR
+                    )
+                    self.make_move(move)
                     self._selected_piece = None
                     self._current_turn_moves = []
-                    self.change_turn()
-                    self.move_stack.append(move)
                     break
             else:
                 self._selected_piece = None

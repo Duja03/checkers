@@ -339,6 +339,7 @@ class Board(object):
                     self._blacks_left += 1
 
             eaten_piece.piece = piece_type
+        
 
     def __str__(self) -> str:
         ans = ""
