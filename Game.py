@@ -1,9 +1,9 @@
+import random
 import time
 from copy import deepcopy
 
 import pygame
 
-from Algorithm import minimax
 from Board import Board
 from Constants import *
 from Move import Move
@@ -11,6 +11,51 @@ from Piece import Piece
 
 
 class Game(object):
+    @staticmethod
+    def compute_initial_hash(board: list, random_table: list) -> int:
+        hash_value = 0
+        for tile_number, tile_piece in enumerate(board):
+            piece = tile_piece.piece
+            if piece != EMPTY_TILE:
+                piece_index = Game.get_piece_index(piece)
+                hash_value ^= random_table[piece_index][tile_number]
+        return hash_value
+
+    @staticmethod
+    def initialize_zobrist():
+        num_piece_types = 4  # regular black, regular white, black king, white king
+        board_size = ROWS * COLS  # 8x8 board
+
+        return [
+            [random.getrandbits(64) for _ in range(board_size)]
+            for _ in range(num_piece_types)
+        ]
+
+    @staticmethod
+    def get_piece_index(piece: int):
+        if piece == BLACK_PIECE:
+            return 0
+        elif piece == WHITE_PIECE:
+            return 1
+        elif piece == BLACK_QUEEN:
+            return 2
+        elif piece == WHITE_QUEEN:
+            return 3
+        return -1  # Error case, should not happen
+
+    @staticmethod
+    def update_hash(
+        hash_value: int, piece_type: int, old_pos: int, new_pos: int, random_table: list
+    ):
+        piece_index = Game.get_piece_index(piece_type)
+        hash_value ^= random_table[piece_index][old_pos]
+        hash_value ^= random_table[piece_index][new_pos]
+        return hash_value
+
+    # Static variables:
+    transposition_table = {}
+    random_table = initialize_zobrist()
+
     def __init__(self, window: pygame.Surface) -> None:
         self._window = window
         self._text_font = pygame.font.SysFont("Arial", 30)
@@ -40,6 +85,8 @@ class Game(object):
         self.white_won = False
         self.played_move: Move = None
         self.selected_color = SELECTED_TILE_WHITE_COLOR
+        Game.transposition_table = {}
+        Game.random_table = Game.initialize_zobrist()
 
     @property
     def turn_color(self) -> int:
@@ -419,19 +466,22 @@ class Game(object):
         start_time = time.time()
         # Save the current state of the board:
         board = deepcopy(self._board.board)
-        value, move = minimax(
+        initial_hash = Game.compute_initial_hash(self._board.board, Game.random_table)
+        value, move = self.minimax(
             self._board,
             7,
             float("-inf"),
             float("inf"),
             self._turn_color == BLACK_COLOR,
             self.forced_jumping,
+            initial_hash,
         )
         end_time = time.time()
         elapsed_time = end_time - start_time
         # Bring back old board state:
         self._board.board = board
         # Checking game state:
+        print(f"Move: {move}")
         if move is not None:
             self.make_move(move)
             my_moves = self._board.calculate_all_turn_moves(
@@ -439,12 +489,10 @@ class Game(object):
             )
             if not my_moves:
                 print("Game over! Black won!")
-                self.game_over = True
                 self.show_game = False
                 self.white_won = False
         else:
             print("Game over! White won!")
-            self.game_over = True
             self.show_game = False
             self.white_won = True
 
@@ -501,3 +549,79 @@ class Game(object):
             else:
                 self._selected_piece = None
                 self._current_turn_moves = []
+
+    def minimax(
+        self,
+        state: Board,
+        depth: int,
+        alpha: float,
+        beta: float,
+        is_maximising_player: bool,
+        forced_jumping: bool = False,
+        zobrist_hash=None,
+    ):
+        if zobrist_hash is None:
+            zobrist_hash = Game.compute_initial_hash(state.board, Game.random_table)
+
+        if zobrist_hash in Game.transposition_table:
+            return Game.transposition_table[zobrist_hash]
+
+        if depth == 0 or state.is_game_over():
+            evaluation = state.evaluate()
+            Game.transposition_table[zobrist_hash] = (evaluation, None)
+            return evaluation, None
+
+        maximizing = not is_maximising_player
+
+        if is_maximising_player:
+            max_eval = float("-inf")
+            best_move = None
+            for move in state.calculate_all_turn_moves(BLACK_COLOR, forced_jumping):
+
+                piece = state.get_piece(move.start_tile)
+                old_pos, new_pos = move.start_tile, move.target_tile
+
+                state.make_move(move)
+
+                new_hash = Game.update_hash(
+                    zobrist_hash, piece, old_pos, new_pos, Game.random_table
+                )
+                eval = self.minimax(
+                    state, depth - 1, alpha, beta, maximizing, forced_jumping, new_hash
+                )[0]
+                state.undo_move(move)
+                if eval > max_eval:
+                    max_eval = eval
+                    best_move = move
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
+
+            Game.transposition_table[zobrist_hash] = (max_eval, best_move)
+            return max_eval, best_move
+        else:
+            min_eval = float("inf")
+            best_move = None
+            for move in state.calculate_all_turn_moves(WHITE_COLOR, forced_jumping):
+
+                piece = state.get_piece(move.start_tile)
+                old_pos, new_pos = move.start_tile, move.target_tile
+
+                state.make_move(move)
+
+                new_hash = Game.update_hash(
+                    zobrist_hash, piece, old_pos, new_pos, Game.random_table
+                )
+                eval = self.minimax(
+                    state, depth - 1, alpha, beta, maximizing, forced_jumping, new_hash
+                )[0]
+                state.undo_move(move)
+                if eval < min_eval:
+                    min_eval = eval
+                    best_move = move
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break
+
+            Game.transposition_table[zobrist_hash] = (min_eval, best_move)
+            return min_eval, best_move

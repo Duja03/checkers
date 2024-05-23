@@ -29,11 +29,11 @@ class Piece(object):
 
     def __str__(self) -> str:
         if self.is_queen():
-            return " W " if self.is_white() else " B "
+            return "W" if self.is_white() else "B"
         elif self.is_empty():
-            return " . "
+            return "."
         else:
-            return " w " if self.is_white() else " b "
+            return "w" if self.is_white() else "b"
 
     def __repr__(self) -> str:
         return self.__str__()

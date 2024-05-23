@@ -2,6 +2,7 @@ from Constants import *
 from Move import Move
 from Piece import Piece
 
+
 class Board(object):
     def __init__(self):
         self._board: list[Piece] = []
@@ -42,6 +43,12 @@ class Board(object):
         whites = [0, 0, 0, 0, 0, 0, 0]
         blacks = [0, 0, 0, 0, 0, 0, 0]
 
+        whites[0] = self._whites_left - self._white_queens
+        blacks[0] = self._blacks_left - self._black_queens
+
+        whites[1] = self._white_queens
+        blacks[1] = self._black_queens
+
         # Now lookup every piece on the board:
         for tile_number in range(ROWS * COLS):
             # row, col are used for transforming 1D to 2D:
@@ -58,12 +65,6 @@ class Board(object):
                 continue
 
             if piece.is_white():
-                # Checking piece type:
-                if not piece.is_queen():
-                    whites[0] += 1
-                else:
-                    whites[1] += 1
-
                 # Now back rows:
                 if row == BOTTOM_BORDER:
                     whites[2] += 1
@@ -104,11 +105,6 @@ class Board(object):
                     ):
                         whites[6] += 1
             else:
-                # Same for black pieces:
-                if piece.is_black():
-                    blacks[0] += 1
-                else:
-                    blacks[1] += 1
 
                 # This time top side:
                 if row == TOP_BORDER:
@@ -426,8 +422,6 @@ class Board(object):
         ans = ""
         for tile_number in range(ROWS * COLS):
             ans += str(self._board[tile_number])
-            if tile_number % COLS == RIGHT_BORDER:
-                ans += "\n"
         return ans
 
     def __repr__(self) -> str:
