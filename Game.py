@@ -434,7 +434,9 @@ class Game(object):
         # Checking game state:
         if move is not None:
             self.make_move(move)
-            my_moves = self._board.calculate_all_turn_moves(self._turn_color)
+            my_moves = self._board.calculate_all_turn_moves(
+                self._turn_color, self.forced_jumping
+            )
             if not my_moves:
                 print("Game over! Black won!")
                 self.game_over = True
@@ -472,9 +474,13 @@ class Game(object):
                 self._selected_piece = None
                 self._current_turn_moves = []
                 return
-            self._current_turn_moves = self._board.calculate_next_moves(
-                selected_tile, self.forced_jumping
+            all_turn_color_moves = self._board.calculate_all_turn_moves(
+                self._turn_color, self.forced_jumping
             )
+            # Now we only want to show moves for selected piece:
+            for move in all_turn_color_moves:
+                if move.start_tile == selected_tile:
+                    self._current_turn_moves.append(move)
             print(self._current_turn_moves)
             self._selected_piece = selected_tile
         else:

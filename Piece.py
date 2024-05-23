@@ -2,19 +2,23 @@ from Constants import *
 
 
 class Piece(object):
-    # Static methods:
+    @staticmethod
     def is_piece_queen(piece) -> bool:
         return bool(piece & QUEEN)
 
+    @staticmethod
     def is_piece_empty(piece) -> bool:
         return piece == EMPTY_TILE
 
+    @staticmethod
     def is_piece_white(piece) -> bool:
         return bool(piece & WHITE_COLOR)
 
+    @staticmethod
     def is_piece_black(piece) -> bool:
         return bool(piece & BLACK_COLOR)
-    
+
+    @staticmethod
     def get_oposite_piece_color(piece) -> int:
         return piece ^ (WHITE_COLOR | BLACK_COLOR)
 
@@ -30,6 +34,9 @@ class Piece(object):
             return " . "
         else:
             return " w " if self.is_white() else " b "
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     @property
     def row(self) -> int:
