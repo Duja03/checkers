@@ -489,10 +489,12 @@ class Game(object):
             )
             if not my_moves:
                 print("Game over! Black won!")
+                self.game_over = True
                 self.show_game = False
                 self.white_won = False
         else:
             print("Game over! White won!")
+            self.game_over = True
             self.show_game = False
             self.white_won = True
 
@@ -529,7 +531,6 @@ class Game(object):
             for move in all_turn_color_moves:
                 if move.start_tile == selected_tile:
                     self._current_turn_moves.append(move)
-            print(self._current_turn_moves)
             self._selected_piece = selected_tile
         else:
             for move in self._current_turn_moves:
@@ -577,12 +578,9 @@ class Game(object):
             max_eval = float("-inf")
             best_move = None
             for move in state.calculate_all_turn_moves(BLACK_COLOR, forced_jumping):
-
                 piece = state.get_piece(move.start_tile)
                 old_pos, new_pos = move.start_tile, move.target_tile
-
                 state.make_move(move)
-
                 new_hash = Game.update_hash(
                     zobrist_hash, piece, old_pos, new_pos, Game.random_table
                 )
@@ -603,12 +601,9 @@ class Game(object):
             min_eval = float("inf")
             best_move = None
             for move in state.calculate_all_turn_moves(WHITE_COLOR, forced_jumping):
-
                 piece = state.get_piece(move.start_tile)
                 old_pos, new_pos = move.start_tile, move.target_tile
-
                 state.make_move(move)
-
                 new_hash = Game.update_hash(
                     zobrist_hash, piece, old_pos, new_pos, Game.random_table
                 )

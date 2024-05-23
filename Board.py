@@ -178,9 +178,9 @@ class Board(object):
         org_tile: int,
         piece_tile: int,
         dir: tuple[int, int],
-        all_moves: list[Move],
+        all_moves: set,
         eaten: list,
-    ):
+    ) -> None:
         # Save data of original piece:
         org_piece = self.get_piece(org_tile)
         cur_piece = self.get_piece(piece_tile)
@@ -226,19 +226,20 @@ class Board(object):
                         # If the longer diagonal tile is empty, we can jump there:
                         if adv_piece.is_empty():
                             new_eaten = eaten + [(short_tile, short_piece.piece)]
-                            all_moves.append(Move(org_tile, adv_tile, new_eaten))
-
-                            # Now recursively checking for more jumps:
-                            self._calculate_next_jumps(
-                                org_tile, adv_tile, sh_dir, all_moves, new_eaten
-                            )
+                            move_to_add = Move(org_tile, adv_tile, new_eaten)
+                            if move_to_add not in all_moves:
+                                all_moves.add(move_to_add)
+                                # Now recursively checking for more jumps:
+                                self._calculate_next_jumps(
+                                    org_tile, adv_tile, sh_dir, all_moves, new_eaten
+                                )
 
     def calculate_next_moves(
         self, piece_tile: int, forced_jumping: bool = False
-    ) -> list[Move]:
+    ) -> set:
         # Lists of possible moves:
-        short_moves = []
-        jumping_moves = []
+        short_moves = set()
+        jumping_moves = set()
 
         # Getting the piece:
         piece = self.get_piece(piece_tile)
@@ -267,7 +268,8 @@ class Board(object):
 
                 # If the tile is empty, we can move there:
                 if short_piece.is_empty():
-                    short_moves.append(Move(piece_tile, short_tile))
+                    move_to_add = Move(piece_tile, short_tile)
+                    short_moves.add(move_to_add)
                 elif short_piece.is_opposite_color(piece):
                     # Since the tile is not empty, we can check
                     # the longer diagonal tile for potential jumps:
@@ -287,12 +289,13 @@ class Board(object):
                         if adv_piece.is_empty():
                             # Adding a piece to eat:
                             eaten = [(short_tile, short_piece.piece)]
-                            jumping_moves.append(Move(piece_tile, adv_tile, eaten))
-
-                            # Now recursively checking for more jumps:
-                            self._calculate_next_jumps(
-                                piece_tile, adv_tile, sh_dir, jumping_moves, eaten
-                            )
+                            adv_move = Move(piece_tile, adv_tile, eaten)
+                            if adv_move not in jumping_moves:
+                                jumping_moves.add(adv_move)
+                                # Now recursively checking for more jumps:
+                                self._calculate_next_jumps(
+                                    piece_tile, adv_tile, sh_dir, jumping_moves, eaten
+                                )
 
         # Depending on the forced_jumping flag, we return different moves:
         if forced_jumping:
@@ -303,7 +306,7 @@ class Board(object):
             return jumping_moves
 
         # This is the 'default' case, where we return combined moves:
-        return jumping_moves + short_moves
+        return short_moves.union(jumping_moves)
 
     def get_all_piece_tiles(self, color: int) -> list[int]:
         # We will store the tiles of the pieces in this list:
@@ -321,12 +324,12 @@ class Board(object):
     ) -> list[Move]:
         # We will get them by iterating over all pieces of the desired color
         # and accumulating their possible moves, in this list:
-        all_turn_moves = []
+        all_turn_moves = set()
         piece_tiles = self.get_all_piece_tiles(color)
 
         # Iterating over all pieces:
         for piece_tile in piece_tiles:
-            all_turn_moves += self.calculate_next_moves(piece_tile, forced_jumping)
+            all_turn_moves = all_turn_moves.union(self.calculate_next_moves(piece_tile, forced_jumping))
 
         # If there are forced jumps, we need to filter out the moves that are not jumps:
         if forced_jumping:
@@ -338,7 +341,9 @@ class Board(object):
 
         # Sorting moves by the number of eaten pieces
         # this might speed up the alpha-beta pruning algorithm:
-        all_turn_moves.sort(key=lambda mov: len(mov.eaten_tiles), reverse=True)
+        all_turn_moves = sorted(
+            all_turn_moves, key=lambda mov: len(mov.eaten_tiles), reverse=True
+        )
         return all_turn_moves
 
     def make_move(self, move: Move):

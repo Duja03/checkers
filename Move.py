@@ -15,6 +15,15 @@ class Move(object):
     def __repr__(self) -> str:
         return self.__str__()
 
+    def __eq__(self, other) -> bool:
+        return (
+            self.start_tile == other.start_tile
+            and self.target_tile == other.target_tile
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.start_tile, self.target_tile))
+
     @property
     def start_tile(self):
         return self._start_tile
