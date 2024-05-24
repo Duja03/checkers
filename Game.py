@@ -11,55 +11,12 @@ from Piece import Piece
 
 
 class Game(object):
-    @staticmethod
-    def compute_initial_hash(board: list, random_table: list) -> int:
-        hash_value = 0
-        for tile_number, tile_piece in enumerate(board):
-            piece = tile_piece.piece
-            if piece != EMPTY_TILE:
-                piece_index = Game.get_piece_index(piece)
-                hash_value ^= random_table[piece_index][tile_number]
-        return hash_value
-
-    @staticmethod
-    def initialize_zobrist():
-        num_piece_types = 4  # regular black, regular white, black king, white king
-        board_size = ROWS * COLS  # 8x8 board
-
-        return [
-            [random.getrandbits(64) for _ in range(board_size)]
-            for _ in range(num_piece_types)
-        ]
-
-    @staticmethod
-    def get_piece_index(piece: int):
-        if piece == BLACK_PIECE:
-            return 0
-        elif piece == WHITE_PIECE:
-            return 1
-        elif piece == BLACK_QUEEN:
-            return 2
-        elif piece == WHITE_QUEEN:
-            return 3
-        return -1  # Error case, should not happen
-
-    @staticmethod
-    def update_hash(
-        hash_value: int, piece_type: int, old_pos: int, new_pos: int, random_table: list
-    ):
-        piece_index = Game.get_piece_index(piece_type)
-        hash_value ^= random_table[piece_index][old_pos]
-        hash_value ^= random_table[piece_index][new_pos]
-        return hash_value
-
-    # Static variables:
     transposition_table = {}
-    random_table = initialize_zobrist()
 
     def __init__(self, window: pygame.Surface) -> None:
         self._window = window
-        self._text_font = pygame.font.SysFont("Arial", 30)
-        self._header_font = pygame.font.SysFont("Arial", 72)
+        self._text_font = pygame.font.SysFont("Arial", TEXT_SIZE)
+        self._header_font = pygame.font.SysFont("Arial", HEADER_SIZE)
         self.single_x = SCREEN_WIDTH // 2 - BUTTON_WIDTH // 2
         self.single_y = SCREEN_HEIGHT // 2 - BUTTON_HEIGHT - 20
         self.multi_x = self.single_x
@@ -85,8 +42,7 @@ class Game(object):
         self.white_won = False
         self.played_move: Move = None
         self.selected_color = SELECTED_TILE_WHITE_COLOR
-        Game.transposition_table = {}
-        Game.random_table = Game.initialize_zobrist()
+        self.start_time = time.time()
 
     @property
     def turn_color(self) -> int:
@@ -110,6 +66,7 @@ class Game(object):
         if self.show_game:
             self.draw_board()
             self.draw_played_move()
+            self.draw_selected_tile()
             self.draw_pieces()
             self.draw_valid_moves()
         if self.game_over:
@@ -124,7 +81,7 @@ class Game(object):
             text = "Black won!"
         text_surface = self._header_font.render(text, True, HEADER_COLOR)
         text_x = SCREEN_WIDTH // 2 - 140
-        text_y = SCREEN_HEIGHT // 2 - 80
+        text_y = SCREEN_HEIGHT // 4
         self._window.blit(text_surface, (text_x, text_y))
         # Drawing return button:
         pygame.draw.rect(
@@ -140,7 +97,7 @@ class Game(object):
         # Render the text
         return_surface = self._text_font.render("Play again", True, TEXT_COLOR)
         return_btn_x = self.single_x + BUTTON_WIDTH // 2 - 60
-        return_btn_y = self.multi_y + 65
+        return_btn_y = self.multi_y + 70
         self._window.blit(return_surface, (return_btn_x, return_btn_y))
 
     def draw_board(self) -> None:
@@ -323,6 +280,23 @@ class Game(object):
 
         self._window.blit(surf, (0, 0))
 
+    def draw_selected_tile(self) -> None:
+        if self._selected_piece is None:
+            return
+        row = self._selected_piece // COLS
+        col = self._selected_piece % COLS
+
+        pygame.draw.rect(
+            self._window,
+            SELECTED_TILE_BASE_COLOR,
+            (
+                col * TILE_SIZE + BOARD_OUTLINE_SIZE,
+                row * TILE_SIZE + BOARD_OUTLINE_SIZE,
+                TILE_SIZE,
+                TILE_SIZE,
+            ),
+        )
+
     def draw_played_move(self) -> None:
         if self.played_move is None:
             return
@@ -401,7 +375,7 @@ class Game(object):
         # Render the text
         single_surface = self._text_font.render("1 Player", True, TEXT_COLOR)
         single_btn_x = self.single_x + BUTTON_WIDTH // 2 - 50
-        single_btn_y = self.single_y + 16
+        single_btn_y = self.single_y + 20
         self._window.blit(single_surface, (single_btn_x, single_btn_y))
         # Multi player button:
         pygame.draw.rect(
@@ -417,11 +391,11 @@ class Game(object):
         # Render the text
         multi_surface = self._text_font.render("2 Player", True, TEXT_COLOR)
         multi_btn_x = self.multi_x + BUTTON_WIDTH // 2 - 50
-        multi_btn_y = self.multi_y + 16
+        multi_btn_y = self.multi_y + 20
         self._window.blit(multi_surface, (multi_btn_x, multi_btn_y))
         # Render mode selection text:
         mode_surface = self._text_font.render("Forced jumping?", True, BUTTON_COLOR)
-        mode_x = self.mode_x
+        mode_x = self.mode_x + 15
         mode_y = self.mode_y - 45
         self._window.blit(mode_surface, (mode_x, mode_y))
         # Drawing button for selecting game mode:
@@ -438,7 +412,7 @@ class Game(object):
         # Render the YES text:
         yes_surface = self._text_font.render("YES", True, TEXT_COLOR)
         yes_btn_x = self.mode_x + BUTTON_WIDTH // 4 - 30
-        yes_btn_y = self.mode_y + 16
+        yes_btn_y = self.mode_y + 20
         self._window.blit(yes_surface, (yes_btn_x, yes_btn_y))
         pygame.draw.rect(
             self._window,
@@ -453,53 +427,13 @@ class Game(object):
         # Render the NO text:
         no_surface = self._text_font.render("NO", True, TEXT_COLOR)
         no_btn_x = self.mode_x + BUTTON_WIDTH // 2 + BUTTON_WIDTH // 4 - 12
-        no_btn_y = self.mode_y + 16
+        no_btn_y = self.mode_y + 20
         self._window.blit(no_surface, (no_btn_x, no_btn_y))
 
     def change_turn(self):
         self._turn_color = (
             BLACK_COLOR if self._turn_color == WHITE_COLOR else WHITE_COLOR
         )
-
-    def play_next_move(self) -> bool:
-        print("Computer is thinking...")
-        start_time = time.time()
-        # Save the current state of the board:
-        board = deepcopy(self._board.board)
-        initial_hash = Game.compute_initial_hash(self._board.board, Game.random_table)
-        value, move = self.minimax(
-            self._board,
-            7,
-            float("-inf"),
-            float("inf"),
-            self._turn_color == BLACK_COLOR,
-            self.forced_jumping,
-            initial_hash,
-        )
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        # Bring back old board state:
-        self._board.board = board
-        # Checking game state:
-        print(f"Move: {move}")
-        if move is not None:
-            self.make_move(move)
-            my_moves = self._board.calculate_all_turn_moves(
-                self._turn_color, self.forced_jumping
-            )
-            if not my_moves:
-                print("Game over! Black won!")
-                self.game_over = True
-                self.show_game = False
-                self.white_won = False
-        else:
-            print("Game over! White won!")
-            self.game_over = True
-            self.show_game = False
-            self.white_won = True
-
-        self.selected_color = SELECTED_TILE_BLACK_COLOR
-        print(f"It took it: {elapsed_time} seconds to find a move.")
 
     def make_move(self, move: Move):
         self._board.make_move(move)
@@ -551,6 +485,69 @@ class Game(object):
                 self._selected_piece = None
                 self._current_turn_moves = []
 
+    def determine_depth(self) -> int:
+        # Example logic for determining depth:
+        num_pieces = self._board._whites_left + self._board._blacks_left
+        if self.forced_jumping:
+            if num_pieces >= 20:
+                return 6
+            elif num_pieces >= 10:
+                return 7
+            else:
+                return 8
+        else:
+            if num_pieces >= 20:
+                return 5
+            elif num_pieces >= 10:
+                return 6
+            else:
+                return 7
+
+    def play_next_move(self) -> bool:
+        print("Computer is thinking...")
+        self.start_time = time.time()
+
+        # Variable depth depending on pieces left:
+        depth = self.determine_depth()
+        print(f"Using search depth: {depth}")
+
+        # Save the current state of the board:
+        board = deepcopy(self._board.board)
+        value, move = self.minimax(
+            self._board,
+            depth,
+            float("-inf"),
+            float("inf"),
+            self._turn_color == BLACK_COLOR,
+            self.forced_jumping,
+        )
+        end_time = time.time()
+        elapsed_time = end_time - self.start_time
+
+        # Bring back old board state:
+        self._board.board = board
+        # Checking game state:
+
+        print(f"Move: {move}")
+        if move is not None:
+            self.make_move(move)
+            my_moves = self._board.calculate_all_turn_moves(
+                self._turn_color, self.forced_jumping
+            )
+            if not my_moves:
+                print("Game over! Black won!")
+                self.game_over = True
+                self.show_game = False
+                self.white_won = False
+        else:
+            print("Game over! White won!")
+            self.game_over = True
+            self.show_game = False
+            self.white_won = True
+
+        self.selected_color = SELECTED_TILE_BLACK_COLOR
+        print(f"It took it: {elapsed_time} seconds to find a move.")
+
     def minimax(
         self,
         state: Board,
@@ -559,18 +556,16 @@ class Game(object):
         beta: float,
         is_maximising_player: bool,
         forced_jumping: bool = False,
-        zobrist_hash=None,
     ):
-        if zobrist_hash is None:
-            zobrist_hash = Game.compute_initial_hash(state.board, Game.random_table)
+        state_str = str(state)
+        if state_str not in self.transposition_table:
+            self.transposition_table[state_str] = state.evaluate()
 
-        if zobrist_hash in Game.transposition_table:
-            return Game.transposition_table[zobrist_hash]
+        if time.time() - self.start_time > 3:
+            return self.transposition_table[state_str], None
 
         if depth == 0 or state.is_game_over():
-            evaluation = state.evaluate()
-            Game.transposition_table[zobrist_hash] = (evaluation, None)
-            return evaluation, None
+            return self.transposition_table[state_str], None
 
         maximizing = not is_maximising_player
 
@@ -578,14 +573,9 @@ class Game(object):
             max_eval = float("-inf")
             best_move = None
             for move in state.calculate_all_turn_moves(BLACK_COLOR, forced_jumping):
-                piece = state.get_piece(move.start_tile)
-                old_pos, new_pos = move.start_tile, move.target_tile
                 state.make_move(move)
-                new_hash = Game.update_hash(
-                    zobrist_hash, piece, old_pos, new_pos, Game.random_table
-                )
                 eval = self.minimax(
-                    state, depth - 1, alpha, beta, maximizing, forced_jumping, new_hash
+                    state, depth - 1, alpha, beta, maximizing, forced_jumping
                 )[0]
                 state.undo_move(move)
                 if eval > max_eval:
@@ -595,20 +585,19 @@ class Game(object):
                 if beta <= alpha:
                     break
 
-            Game.transposition_table[zobrist_hash] = (max_eval, best_move)
             return max_eval, best_move
         else:
             min_eval = float("inf")
             best_move = None
             for move in state.calculate_all_turn_moves(WHITE_COLOR, forced_jumping):
-                piece = state.get_piece(move.start_tile)
-                old_pos, new_pos = move.start_tile, move.target_tile
                 state.make_move(move)
-                new_hash = Game.update_hash(
-                    zobrist_hash, piece, old_pos, new_pos, Game.random_table
-                )
                 eval = self.minimax(
-                    state, depth - 1, alpha, beta, maximizing, forced_jumping, new_hash
+                    state,
+                    depth - 1,
+                    alpha,
+                    beta,
+                    maximizing,
+                    forced_jumping,
                 )[0]
                 state.undo_move(move)
                 if eval < min_eval:
@@ -618,5 +607,4 @@ class Game(object):
                 if beta <= alpha:
                     break
 
-            Game.transposition_table[zobrist_hash] = (min_eval, best_move)
             return min_eval, best_move
