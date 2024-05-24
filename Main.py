@@ -9,6 +9,10 @@ pygame.init()
 WIN = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Checkers")
 
+# Setting the icon:
+icon = pygame.image.load("./checker-icon.png")
+pygame.display.set_icon(icon)
+
 
 def get_row_col_from_mouse(pos):
     x, y = pos
@@ -22,6 +26,7 @@ def main():
 
     clock = pygame.time.Clock()
     game = Game(WIN)
+    game.game_over = True
 
     while run:
         clock.tick(FPS)
