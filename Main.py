@@ -26,7 +26,6 @@ def main():
 
     clock = pygame.time.Clock()
     game = Game(WIN)
-    game.game_over = True
 
     while run:
         clock.tick(FPS)
